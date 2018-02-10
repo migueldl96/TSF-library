@@ -16,6 +16,9 @@ class TimeSeriesForecaster(BaseEstimator):
                 self.model.set_params(**{param: value})
         return self
 
+    def fit(self, X, y=None):
+        return self.model.fit(X, y)
+
 
 class SimpleAR(BaseEstimator, TransformerMixin):
     def __init__(self, n_prev=5):
@@ -25,7 +28,7 @@ class SimpleAR(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        X = self.fit_transform()
+        X = self.fit_transform(X, y=y)
         return X
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -54,7 +57,7 @@ class SimpleAR(BaseEstimator, TransformerMixin):
 
         # We already have the data, lets append it to our inputs matrix
         X, y = append_inputs(X, partial_X, y)
-        print y
+
         return X
 
 
@@ -71,10 +74,18 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
         self._limit, self._handler = self.get_stat_limit(y)
         return self
 
-    def transform(self, X, y=None, **fit_params):
+    def transform(self, X, y=None):
+        X = self.transform(X, y=y)
+        return X
+
+    def fit_transform(self, X, y=None, **fit_params):
+        # Fit handler and limit
+        self._limit, self._handler = self.get_stat_limit(y)
+
         # Y must be the time serie!
         if y is None:
-            raise ValueError("TSF transformers need to receive the time serie data as Y input.")
+            raise ValueError("TSF transformers need to receive the time serie data as Y input.\
+                                 Please call fit before transforming.")
 
         # X must be ndarray-type
         if not isinstance(X, np.ndarray):
@@ -84,7 +95,7 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
         if not self._handler or not self._limit:
             raise NotImplementedError("Please call fit before you try to transform.")
 
-        # We begin for in the third sample, some stats need at least two samples to work
+        # We begin in the third sample, some stats need at least two samples to work
         partial_X = []
         for index, output in enumerate(y[2:]):
             index = index + 2
@@ -104,17 +115,16 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
 
         # We already have the data, lets append it to our inputs matrix
         X, y = append_inputs(X, partial_X, y)
-        print(X)
         return X
 
     def get_stat_limit(self, y):
 
         # Define stat handlers
-        def var(samples):
+        def variance(samples):
             return np.var(samples)
 
         if self._stat == 'variance':
-            return var(y) * self._ratio, var
+            return variance(y) * self._ratio, variance
         else:
             raise ValueError("Invalid stat argument for dinamic window. Please use ['variance'].")
 
@@ -145,5 +155,5 @@ def append_inputs(X, X_new, y):
 
             # We cant predict first 'dif' values from 'y'
             y = y[dif:]
-            print y
+
     return X, y
