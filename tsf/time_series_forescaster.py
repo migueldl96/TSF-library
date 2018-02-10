@@ -4,20 +4,28 @@ from sklearn.base import BaseEstimator, RegressorMixin, TransformerMixin
 from sklearn.linear_model import LassoCV
 
 
-class TimeSeriesForecaster(BaseEstimator):
+class TimeSeriesForecaster(BaseEstimator, RegressorMixin):
     def __init__(self, base_model=LassoCV()):
-        self.model = base_model
+        self._model = base_model
 
     def set_params(self, **params):
         for param, value in params.iteritems():
             if param in self.get_params():
                 super(TimeSeriesForecaster, self).set_params(**{param: value})
             else:
-                self.model.set_params(**{param: value})
+                self._model.set_params(**{param: value})
         return self
 
     def fit(self, X, y=None):
-        return self.model.fit(X, y)
+        # We must fit with the same number of targets as the inputs matrix
+        y = self.get_targets(X, y)
+
+        return self._model.fit(X, y)
+
+    def get_targets(self, X, y):
+        samples_x = X.shape[0]
+        offset_y = y.shape[0] - samples_x
+        return y[offset_y:]
 
 
 class SimpleAR(BaseEstimator, TransformerMixin):
@@ -62,13 +70,19 @@ class SimpleAR(BaseEstimator, TransformerMixin):
 
 
 class DinamicWindow(BaseEstimator, TransformerMixin):
-    def __init__(self, stat='variance', ratio=0.1):
+    def __init__(self, stat='variance', ratio=0.1, metrics=['mean', 'variance']):
         self._stat = stat
         self._ratio = ratio
 
         # Fit attributes
         self._handler = None
         self._limit = None
+
+        # Metrics
+        if not isinstance(metrics, list):
+            raise ValueError("'metrics' param should be a list.")
+        else:
+            self._metrics = metrics
 
     def fit(self, X, y=None):
         self._limit, self._handler = self.get_stat_limit(y)
@@ -104,15 +118,16 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
             pivot = index-2
             samples = y[pivot:index]
 
-            while self._handler(samples) < self._limit and pivot - 1 >= 0:
+            while pivot - 1 >= 0 and self._handler(samples[pivot-1:]) < self._limit:
                 pivot = pivot - 1
                 samples = y[pivot:index]
 
-            partial_X.append([np.var(samples), np.mean(samples)])
+            # Once we have the samples, we gather information about them
+            partial_X.append([np.mean(samples), np.var(samples)])
 
         # We begin in the third sample, some stats need at least two samples to work
         y = y[2:]
-
+        quit()
         # We already have the data, lets append it to our inputs matrix
         X, y = append_inputs(X, partial_X, y)
         return X
@@ -127,6 +142,13 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
             return variance(y) * self._ratio, variance
         else:
             raise ValueError("Invalid stat argument for dinamic window. Please use ['variance'].")
+
+    def _get_samples_info(self, samples, metric):
+        print(samples)
+        return {
+            'mean' : np.mean(samples),
+            'variance' : np.var(samples)
+        }.get(metric, ValueError("Unkown '%s' metric" + metric))
 
 
 def append_inputs(X, X_new, y):
