@@ -22,6 +22,9 @@ class TimeSeriesForecaster(BaseEstimator, RegressorMixin):
 
         return self._model.fit(X, y)
 
+    def predict(self, X, y=None):
+        return self._model.predict(X)
+
     def get_targets(self, X, y):
         samples_x = X.shape[0]
         offset_y = y.shape[0] - samples_x
@@ -155,6 +158,11 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
             'mean': np.mean(samples),
             'variance': np.var(samples)
         }.get(metric)
+
+
+class ClassChange(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        print "Just an init method!"
 
 
 def append_inputs(X, X_new, y):
