@@ -79,6 +79,7 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
         self._limit = None
 
         # Metrics
+        self._valid_metrics = ['mean', 'variance']
         if not isinstance(metrics, list):
             raise ValueError("'metrics' param should be a list.")
         else:
@@ -118,16 +119,19 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
             pivot = index-2
             samples = y[pivot:index]
 
-            while pivot - 1 >= 0 and self._handler(samples[pivot-1:]) < self._limit:
+            while self._handler(samples) < self._limit and pivot - 1 >= 0:
                 pivot = pivot - 1
                 samples = y[pivot:index]
 
-            # Once we have the samples, we gather information about them
-            partial_X.append([np.mean(samples), np.var(samples)])
+            # Once we have the samples, we gather info about them
+            samples_info = []
+            for metric in self._metrics:
+                samples_info.append(self._get_samples_info(samples, metric))
+            partial_X.append(samples_info)
 
         # We begin in the third sample, some stats need at least two samples to work
         y = y[2:]
-        quit()
+
         # We already have the data, lets append it to our inputs matrix
         X, y = append_inputs(X, partial_X, y)
         return X
@@ -144,11 +148,13 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
             raise ValueError("Invalid stat argument for dinamic window. Please use ['variance'].")
 
     def _get_samples_info(self, samples, metric):
-        print(samples)
+        if metric not in self._valid_metrics:
+            raise ValueError("Unkown '%s' metric" % metric)
+
         return {
-            'mean' : np.mean(samples),
-            'variance' : np.var(samples)
-        }.get(metric, ValueError("Unkown '%s' metric" + metric))
+            'mean': np.mean(samples),
+            'variance': np.var(samples)
+        }.get(metric)
 
 
 def append_inputs(X, X_new, y):
@@ -177,5 +183,4 @@ def append_inputs(X, X_new, y):
 
             # We cant predict first 'dif' values from 'y'
             y = y[dif:]
-
     return X, y
