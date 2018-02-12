@@ -93,7 +93,7 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        X = self.transform(X, y=y)
+        X = self.fit_transform(X, y=y)
         return X
 
     def fit_transform(self, X, y=None, **fit_params):
