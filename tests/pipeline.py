@@ -4,8 +4,8 @@ import numpy as np
 import sys
 sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF')
 from tsf.time_series_forescaster import SimpleAR, DinamicWindow, TimeSeriesForecaster
-from sklearn.pipeline import Pipeline
-
+from tsf.pipeline.tsf_pipeline import tsf_pipeline
+from sklearn.linear_model import LassoCV
 
 def run_pipeline_test():
     # Data
@@ -13,9 +13,9 @@ def run_pipeline_test():
     test_data  = np.array(range(30, 40, 1))
 
     # Create pipeline
-    pipe = Pipeline([('ar', SimpleAR(n_prev=3)),
+    pipe = tsf_pipeline([('ar', SimpleAR(n_prev=3)),
                      ('dw', DinamicWindow(stat='variance', ratio=0.1, metrics=['mean', 'variance'])),
-                     ('regressor', TimeSeriesForecaster())])
+                     ('regressor', LassoCV())])
 
     # Fit pipeline
     pipe.fit(X=[], y=train_data)

@@ -33,7 +33,7 @@ class TimeSeriesForecaster(BaseEstimator, RegressorMixin):
 
 class SimpleAR(BaseEstimator, TransformerMixin):
     def __init__(self, n_prev=5):
-        self._n_prev = n_prev
+        self.n_prev = n_prev
 
     def fit(self, X, y=None):
         return self
@@ -54,7 +54,7 @@ class SimpleAR(BaseEstimator, TransformerMixin):
         # We have to get the previous 'n_prev' samples for every 'y' value
         partial_X = []
         begin = 0
-        end = self._n_prev
+        end = self.n_prev
 
         while end < len(y):
             n_samples = y[begin:end]
@@ -63,7 +63,7 @@ class SimpleAR(BaseEstimator, TransformerMixin):
             end = end + 1
 
         # Only 'y' samples offset by 'n_prev' can be forescasted
-        y = y[self._n_prev:]
+        y = y[self.n_prev:]
         y = np.array(y)
 
         # We already have the data, lets append it to our inputs matrix
@@ -74,8 +74,8 @@ class SimpleAR(BaseEstimator, TransformerMixin):
 
 class DinamicWindow(BaseEstimator, TransformerMixin):
     def __init__(self, stat='variance', ratio=0.1, metrics=['mean', 'variance']):
-        self._stat = stat
-        self._ratio = ratio
+        self.stat = stat
+        self.ratio = ratio
 
         # Fit attributes
         self._handler = None
@@ -86,7 +86,7 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
         if not isinstance(metrics, list):
             raise ValueError("'metrics' param should be a list.")
         else:
-            self._metrics = metrics
+            self.metrics = metrics
 
     def fit(self, X, y=None):
         self._limit, self._handler = self.get_stat_limit(y)
@@ -128,7 +128,7 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
 
             # Once we have the samples, we gather info about them
             samples_info = []
-            for metric in self._metrics:
+            for metric in self.metrics:
                 samples_info.append(self._get_samples_info(samples, metric))
             partial_X.append(samples_info)
 
@@ -145,8 +145,8 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
         def variance(samples):
             return np.var(samples)
 
-        if self._stat == 'variance':
-            return variance(y) * self._ratio, variance
+        if self.stat == 'variance':
+            return variance(y) * self.ratio, variance
         else:
             raise ValueError("Invalid stat argument for dinamic window. Please use ['variance'].")
 

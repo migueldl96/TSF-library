@@ -129,5 +129,42 @@ class tsf_pipeline(Pipeline):
 
         return self.steps[-1][-1].predict(X)
 
+    def score(self, y, sample_weight=None):
+        """Apply transforms, and score with the final estimator
+
+        Parameters
+        ----------
+        X : iterable
+            Data to predict on. Must fulfill input requirements of first step
+            of the pipeline.
+
+        y : iterable, default=None
+            Targets used for scoring. Must fulfill label requirements for all
+            steps of the pipeline.
+
+        sample_weight : array-like, default=None
+            If not None, this argument is passed as ``sample_weight`` keyword
+            argument to the ``score`` method of the final estimator.
+
+        Returns
+        -------
+        score : float
+        """
+        Xt = []
+        for name, transform in self.steps[:-1]:
+            if transform is not None:
+                Xt = transform.transform(X=Xt, y=y)
+        score_params = {}
+        if sample_weight is not None:
+            score_params['sample_weight'] = sample_weight
+
+        Yt = y[Xt.shape[0]:]
+        return self.steps[-1][-1].score(Xt, Yt, **score_params)
+
+    def offset_y(self, real_y, predicted_y):
+        offset = len(real_y) - len(predicted_y)
+        return real_y[offset:]
+
     def _reshape_outputs(self, X, y=None):
-        return y[X.shape[0]:]
+        offset = len(y) - X.shape[0]
+        return y[offset:]
