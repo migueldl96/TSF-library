@@ -2,10 +2,8 @@
 
 import numpy as np
 import sys
-sys.path.append('/Users/x5981md/time-series-forecasting/tsf/')
-sys.path.append('/Users/x5981md/time-series-forecasting/tsf/pipeline')
+sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf')
 from time_series_forescaster import SimpleAR, DinamicWindow, TimeSeriesForecaster
-from sklearn.pipeline import Pipeline
 
 
 def run_no_pipeline_test():

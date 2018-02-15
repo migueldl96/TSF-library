@@ -1,10 +1,10 @@
 # -*- coding: utf8 -*-
 
 import sys
-sys.path.append('/Users/x5981md/time-series-forecasting/tsf/')
-sys.path.append('/Users/x5981md/time-series-forecasting/tsf/pipeline')
-from time_series_forescaster import SimpleAR, DinamicWindow
-from tsf_pipeline import tsf_pipeline
+sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf')
+sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf/pipeline')
+from time_series_forescaster import SimpleAR, DinamicWindow, RangeWindow
+from tsf_pipeline import TSFPipeline
 from sklearn.linear_model import LassoCV
 from sklearn.metrics import mean_squared_error
 
@@ -38,9 +38,9 @@ def run_pipeline_test(file, ratio, test):
     train = data[:n_test]
 
     # Create pipeline
-    pipe = tsf_pipeline([('ar', SimpleAR(n_prev=3)),
-                     ('dw', DinamicWindow(stat=var_function, ratio=ratio, metrics=['variance', mean_function])),
-                     ('regressor', LassoCV(random_state=0))])
+    pipe = TSFPipeline([('ar', SimpleAR(n_prev=3)),
+                         ('dw', DinamicWindow(stat=var_function, ratio=ratio, metrics=['variance', mean_function])),
+                        ('regressor', LassoCV(random_state=0))])
 
     # Fit pipeline
     pipe.fit(X=[], y=train)
@@ -55,6 +55,7 @@ def run_pipeline_test(file, ratio, test):
 
     print "MSE train: " + str(mse_train)
     print "MSE test: " + str(mse_test)
+
 
 if __name__ == "__main__":
     run_pipeline_test()
