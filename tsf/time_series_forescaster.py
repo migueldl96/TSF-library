@@ -68,7 +68,6 @@ class SimpleAR(BaseEstimator, TransformerMixin):
 
         # We already have the data, lets append it to our inputs matrix
         X, y = append_inputs(X, partial_X, y)
-
         return X
 
 
@@ -78,18 +77,27 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
         self.ratio = ratio
 
         # Fit attributes
-        self._handler = None
+        if callable(stat):
+            self._handler = stat
+        else:
+            self._handler = None
         self._limit = None
 
         # Metrics
         self._valid_metrics = ['mean', 'variance']
-        if not isinstance(metrics, list):
-            raise ValueError("'metrics' param should be a list.")
+        if not hasattr(metrics, "__iter__"):
+            raise ValueError("'metrics' param should be iterable.")
         else:
             self.metrics = metrics
 
     def fit(self, X, y=None):
-        self._limit, self._handler = self.get_stat_limit(y)
+
+        # User-defined handler?
+        if callable(self._handler):
+            self._limit = self._handler(y) * self.ratio
+        else:
+            self._limit, self._handler = self.get_stat_limit(y)
+
         return self
 
     def transform(self, X, y=None):
@@ -97,8 +105,12 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
         return X
 
     def fit_transform(self, X, y=None, **fit_params):
-        # Fit handler and limit
-        self._limit, self._handler = self.get_stat_limit(y)
+
+        # User-defined handler?
+        if callable(self._handler):
+            self._limit = self._handler(y) * self.ratio
+        else:
+            self._limit, self._handler = self.get_stat_limit(y)
 
         # Y must be the time serie!
         if y is None:
@@ -109,11 +121,7 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
         if not isinstance(X, np.ndarray):
             X = np.array(X)
 
-        # Model must be fitted before data can be transformed
-        if not self._handler or not self._limit:
-            raise NotImplementedError("Please call fit before you try to transform.")
-
-        # We begin in the third sample, some stats need at least two samples to work
+        # Build database for every output
         partial_X = []
         for index, output in enumerate(y[2:]):
             index = index + 2
@@ -148,16 +156,20 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
         if self.stat == 'variance':
             return variance(y) * self.ratio, variance
         else:
-            raise ValueError("Invalid stat argument for dinamic window. Please use ['variance'].")
+            raise ValueError("Invalid stat argument for dinamic window. Please use ['variance'] or own stat function.")
 
     def _get_samples_info(self, samples, metric):
-        if metric not in self._valid_metrics:
+        # Valid metric?
+        if metric not in self._valid_metrics and not callable(metric):
             raise ValueError("Unkown '%s' metric" % metric)
 
-        return {
-            'mean': np.mean(samples),
-            'variance': np.var(samples)
-        }.get(metric)
+        if callable(metric):
+            return metric(samples)
+        else:
+            return {
+                'mean': np.mean(samples),
+                'variance': np.var(samples)
+            }.get(metric)
 
 
 class ClassChange(BaseEstimator, TransformerMixin):

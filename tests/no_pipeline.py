@@ -2,12 +2,13 @@
 
 import numpy as np
 import sys
-sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF')
-from tsf.time_series_forescaster import SimpleAR, DinamicWindow, TimeSeriesForecaster
+sys.path.append('/Users/x5981md/time-series-forecasting/tsf/')
+sys.path.append('/Users/x5981md/time-series-forecasting/tsf/pipeline')
+from time_series_forescaster import SimpleAR, DinamicWindow, TimeSeriesForecaster
 from sklearn.pipeline import Pipeline
 
 
-def run_pipeline_test():
+def run_no_pipeline_test():
     # Data
     train_data = np.array(range(0, 20, 1))
     test_data  = np.array(range(30, 40, 1))
@@ -33,10 +34,11 @@ def run_pipeline_test():
     model = TimeSeriesForecaster()
     model.fit(X_train, y=train_data)
 
-    print "Real test data:"
-    print test_data
-    print "Predicted test data:"
-    print model.predict(X_test)
+    print "Real and predicted test data:"
+    predicted_test = model.predict(X_test)
+    dif = len(test_data) - len(predicted_test)
+    print test_data[dif:]
+    print predicted_test
 
 if __name__ == "__main__":
-    run_pipeline_test()
+    run_no_pipeline_test()
