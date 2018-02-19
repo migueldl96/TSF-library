@@ -1,2 +1,2 @@
 # time-series-forecasting
-scikit-learn extension for forecasting through time series models data
+scikit-learn extension for forecasting values through time series models

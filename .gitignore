@@ -1,0 +1,6 @@
+misc.xml
+.idea/modules.xml
+.idea/TSF.iml
+.idea/workspace.xml
+tsf/__init__.pyc
+tsf/time_series_forescaster.pyc
