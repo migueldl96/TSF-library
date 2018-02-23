@@ -22,24 +22,23 @@ def mean_function(samples):
 
 
 @click.command()
-@click.option('--file', '-f', default=None, required=True, help=u'Fichero de serie temporal')
-@click.option('--ratio', '-v', default=0.1, required=False, help=u'Ratio de stat total')
-@click.option('--test', '-t', default=0.3, required=False, help=u'Ratio de muestras para test')
-def run_pipeline_test(file, ratio, test):
+@click.option('--files', '-f', type=click.Choice(['temp.txt', 'humidity.txt', 'windDir.txt', 'windSpeed.txt',
+                                                 'QNH.txt']), multiple=True)
+@click.option('--ratio', '-r', default=0.1, required=False, help=u'Ratio de stat total')
+@click.option('--test_r', '-t', default=0.3, required=False, help=u'Ratio de muestras para test')
+def run_pipeline_test(files, ratio, test_r):
+
     # Read
-    data = pd.read_csv(file, header=None)
-    data = data.values.reshape(1, data.values.shape[0])
-    data = data[0]
+    data = read_data(files)
+    #data = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [11, 12, 13, 14, 15, 16, 17, 18, 19, 20]])
 
     # Split
-    n_data = len(data)
-    n_test = int(n_data * test)
-    test = data[n_test:]
-    train = data[:n_test]
+    train, test = split_train_test(data, test_r)
 
     # Create pipeline
-    pipe = TSFPipeline([('ar', SimpleAR(n_prev=3)),
-                         ('dw', DinamicWindow(stat=var_function, ratio=ratio, metrics=['variance', mean_function])),
+    pipe = TSFPipeline([('ar', SimpleAR(n_prev=2)),
+                        ('dw', DinamicWindow(ratio=ratio)),
+                        ('rw', RangeWindow()),
                         ('regressor', LassoCV(random_state=0))])
 
     # Fit pipeline
@@ -55,6 +54,31 @@ def run_pipeline_test(file, ratio, test):
 
     print "MSE train: " + str(mse_train)
     print "MSE test: " + str(mse_test)
+
+
+def read_data(files):
+    data = []
+    for file in files:
+        path = '../data/' + file
+        single_serie = pd.read_csv(path, header=None).values
+        single_serie = single_serie.reshape(1, single_serie.shape[0])
+
+        if len(data) == 0:
+            data = single_serie
+        else:
+            data = np.append(data, single_serie, axis=0)
+
+    return data
+
+
+def split_train_test(data, test_ratio):
+    train_ratio = 1-test_ratio
+    if len(data.shape) == 1:
+        train_samples = int(len(data) * train_ratio)
+        return data[:train_samples], data[train_samples:]
+    else:
+        train_samples = int(len(data[0]) * train_ratio)
+        return data[:, :train_samples], data[:, train_samples:]
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 import numpy as np
-
+from sklearn.externals.joblib import Parallel, delayed
 from sklearn.base import BaseEstimator, RegressorMixin, TransformerMixin
 from sklearn.linear_model import LassoCV
 
@@ -47,27 +47,34 @@ class SimpleAR(BaseEstimator, TransformerMixin):
         if y is None:
             raise ValueError("TSF transformers need to receive the time serie data as Y input.")
 
+        # Y must be 2D
+        if len(y.shape) == 1:
+            y = np.array([y])
+
         # X must be ndarray-type
         if not isinstance(X, np.ndarray):
             X = np.array(X)
 
         # We have to get the previous 'n_prev' samples for every 'y' value
-        partial_X = []
-        begin = 0
-        end = self.n_prev
+        for serie in y:
+            partial_X = []
+            begin = 0
+            end = self.n_prev
 
-        while end < len(y):
-            n_samples = y[begin:end]
-            partial_X.append(n_samples)
-            begin = begin + 1
-            end = end + 1
+            while end < len(serie):
+                n_samples = serie[begin:end]
+                partial_X.append(n_samples)
+                begin = begin + 1
+                end = end + 1
 
-        # Only 'y' samples offset by 'n_prev' can be forescasted
-        y = y[self.n_prev:]
-        y = np.array(y)
+            # Only 'y' samples offset by 'n_prev' can be forescasted
+            serie = serie[self.n_prev:]
+            serie = np.array(serie)
 
-        # We already have the data, lets append it to our inputs matrix
-        X, y = append_inputs(X, partial_X, y)
+            # We already have the data, lets append it to our inputs matrix
+            X, y = append_inputs(X, partial_X, serie)
+        
+
         return X
 
 
@@ -88,7 +95,7 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
         if not hasattr(metrics, "__iter__"):
             raise ValueError("'metrics' param should be iterable.")
         else:
-            self._metrics = metrics
+            self.metrics = metrics
 
     def fit(self, X, y=None):
 
@@ -116,35 +123,39 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
         if y is None:
             raise ValueError("TSF transformers need to receive the time serie data as Y input.\
                                  Please call fit before transforming.")
+        # Y must be 2D
+        if len(y.shape) == 1:
+            y = np.array([y])
 
         # X must be ndarray-type
         if not isinstance(X, np.ndarray):
             X = np.array(X)
 
         # Build database for every output
-        partial_X = []
-        for index, output in enumerate(y[2:]):
-            index = index + 2
+        for serie in y:
+            partial_X = []
+            for index, output in enumerate(serie[2:]):
+                index = index + 2
 
-            # First two previous samples
-            pivot = index-2
-            samples = y[pivot:index]
+                # First two previous samples
+                pivot = index-2
+                samples = serie[pivot:index]
 
-            while self._handler(samples) < self._limit and pivot - 1 >= 0:
-                pivot = pivot - 1
-                samples = y[pivot:index]
+                while self._handler(samples) < self._limit and pivot - 1 >= 0:
+                    pivot = pivot - 1
+                    samples = serie[pivot:index]
 
-            # Once we have the samples, gather info about them
-            samples_info = []
-            for metric in self._metrics:
-                samples_info.append(_get_samples_info(samples, metric))
-            partial_X.append(samples_info)
+                # Once we have the samples, gather info about them
+                samples_info = []
+                for metric in self.metrics:
+                    samples_info.append(_get_samples_info(samples, metric))
+                partial_X.append(samples_info)
 
-        # We begin in the third sample, some stats need at least two samples to work
-        y = y[2:]
+            # We begin in the third sample, some stats need at least two samples to work
+            serie = y[2:]
 
-        # We already have the data, lets append it to our inputs matrix
-        X, y = append_inputs(X, partial_X, y)
+            # We already have the data, lets append it to our inputs matrix
+            X, serie = append_inputs(X, partial_X, serie)
 
         return X
 
@@ -160,7 +171,7 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
 
 
 class RangeWindow(BaseEstimator, TransformerMixin):
-    def __init__(self, metrics=['variance', 'mean']):
+    def __init__(self, metrics=['mean', 'variance']):
 
         # Metrics
         if not hasattr(metrics, "__iter__"):
@@ -183,7 +194,7 @@ class RangeWindow(BaseEstimator, TransformerMixin):
 
     def fit_transform(self, X, y=None):
         # Deviation for range
-        self._dev = (np.max(y) - np.min(y)) / np.mean(y)
+        self._dev = (np.max(y) - np.min(y)) / np.var(y)
 
         # Y must be the time serie!
         if y is None:
@@ -195,32 +206,33 @@ class RangeWindow(BaseEstimator, TransformerMixin):
             X = np.array(X)
 
         # Build database for every output
-        partial_X = []
-        for index, output in enumerate(y[2:]):
-            index = index + 2
+        for serie in y:
+            partial_X = []
+            for index, output in enumerate(serie[2:]):
+                index = index + 2
 
-            # Allowed range from the sample before the output
-            previous = y[index-1]
-            allowed_range = np.arange(previous - self._dev, previous + self._dev)
+                # Allowed range from the sample before the output
+                previous = serie[index-1]
+                allowed_range = np.arange(previous - self._dev, previous + self._dev)
 
-            # Get the samples in the range
-            pivot = index - 1
-            while pivot - 1 >= 0 and self._in_range(y[pivot - 1], allowed_range):
-                pivot = pivot - 1
+                # Get the samples in the range
+                pivot = index - 1
+                while pivot - 1 >= 0 and self._in_range(serie[pivot - 1], allowed_range):
+                    pivot = pivot - 1
 
-            # Once we have the samples, gather info about them
-            samples = y[pivot:index]
-            samples_info = []
+                # Once we have the samples, gather info about them
+                samples = serie[pivot:index]
+                samples_info = []
 
-            for metric in self._metrics:
-                samples_info.append(_get_samples_info(samples, metric))
-            partial_X.append(samples_info)
+                for metric in self._metrics:
+                    samples_info.append(_get_samples_info(samples, metric))
+                partial_X.append(samples_info)
 
-        # We begin in the third sample
-        y = y[2:]
+            # We begin in the third sample
+            serie = serie[2:]
 
-        # We already have the data, lets append it to our inputs matrix
-        X, y = append_inputs(X, partial_X, y)
+            # We already have the data, lets append it to our inputs matrix
+            X, serie = append_inputs(X, partial_X, serie)
 
         return X
 
