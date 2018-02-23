@@ -57,26 +57,29 @@ class SimpleAR(BaseEstimator, TransformerMixin):
 
         # We have to get the previous 'n_prev' samples for every 'y' value
         for serie in y:
-            partial_X = []
-            begin = 0
-            end = self.n_prev
-
-            while end < len(serie):
-                n_samples = serie[begin:end]
-                partial_X.append(n_samples)
-                begin = begin + 1
-                end = end + 1
+            partial_X = self.calculate_partial_X(serie)
 
             # Only 'y' samples offset by 'n_prev' can be forescasted
             serie = serie[self.n_prev:]
             serie = np.array(serie)
 
             # We already have the data, lets append it to our inputs matrix
-            X, y = append_inputs(X, partial_X, serie)
-        
+            X, serie = append_inputs(X, partial_X, serie)
 
         return X
 
+    def calculate_partial_X(self, serie):
+        partial_X = []
+        begin = 0
+        end = self.n_prev
+
+        while end < len(serie):
+            n_samples = serie[begin:end]
+            partial_X.append(n_samples)
+            begin = begin + 1
+            end = end + 1
+
+        return partial_X
 
 class DinamicWindow(BaseEstimator, TransformerMixin):
     def __init__(self, stat='variance', ratio=0.1, metrics=['mean', 'variance']):
@@ -113,12 +116,6 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
 
     def fit_transform(self, X, y=None, **fit_params):
 
-        # User-defined handler?
-        if callable(self._handler):
-            self._limit = self._handler(y) * self.ratio
-        else:
-            self._limit, self._handler = self.get_stat_limit(y)
-
         # Y must be the time serie!
         if y is None:
             raise ValueError("TSF transformers need to receive the time serie data as Y input.\
@@ -133,23 +130,13 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
 
         # Build database for every output
         for serie in y:
-            partial_X = []
-            for index, output in enumerate(serie[2:]):
-                index = index + 2
+            # User-defined handler?
+            if callable(self._handler):
+                self._limit = self._handler(serie) * self.ratio
+            else:
+                self._limit, self._handler = self.get_stat_limit(serie)
 
-                # First two previous samples
-                pivot = index-2
-                samples = serie[pivot:index]
-
-                while self._handler(samples) < self._limit and pivot - 1 >= 0:
-                    pivot = pivot - 1
-                    samples = serie[pivot:index]
-
-                # Once we have the samples, gather info about them
-                samples_info = []
-                for metric in self.metrics:
-                    samples_info.append(_get_samples_info(samples, metric))
-                partial_X.append(samples_info)
+            partial_X = self.calculate_partial_X(serie)
 
             # We begin in the third sample, some stats need at least two samples to work
             serie = y[2:]
@@ -158,6 +145,28 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
             X, serie = append_inputs(X, partial_X, serie)
 
         return X
+
+    def calculate_partial_X(self, serie):
+        partial_X = []
+
+        for index, output in enumerate(serie[2:]):
+            index = index + 2
+
+            # First two previous samples
+            pivot = index-2
+            samples = serie[pivot:index]
+
+            while self._handler(samples) < self._limit and pivot - 1 >= 0:
+                pivot = pivot - 1
+                samples = serie[pivot:index]
+
+            # Once we have the samples, gather info about them
+            samples_info = []
+            for metric in self.metrics:
+                samples_info.append(_get_samples_info(samples, metric))
+            partial_X.append(samples_info)
+
+        return partial_X
 
     def get_stat_limit(self, y):
         # Define stat handlers
