@@ -1,4 +1,5 @@
 import numpy as np
+from tsf_tools import _window_maker_delegate
 from sklearn.externals.joblib import Parallel, delayed
 from sklearn.base import BaseEstimator, RegressorMixin, TransformerMixin
 from sklearn.linear_model import LassoCV
@@ -57,7 +58,7 @@ class SimpleAR(BaseEstimator, TransformerMixin):
 
         # We have to get the previous 'n_prev' samples for every 'y' value
         for serie in y:
-            partial_X = self.calculate_partial_X(serie)
+            partial_X = _window_maker_delegate(serie, fixed=self.n_prev)
 
             # Only 'y' samples offset by 'n_prev' can be forescasted
             serie = serie[self.n_prev:]
@@ -68,18 +69,6 @@ class SimpleAR(BaseEstimator, TransformerMixin):
 
         return X
 
-    def calculate_partial_X(self, serie):
-        partial_X = []
-        begin = 0
-        end = self.n_prev
-
-        while end < len(serie):
-            n_samples = serie[begin:end]
-            partial_X.append(n_samples)
-            begin = begin + 1
-            end = end + 1
-
-        return partial_X
 
 class DinamicWindow(BaseEstimator, TransformerMixin):
     def __init__(self, stat='variance', ratio=0.1, metrics=['mean', 'variance']):
@@ -91,7 +80,6 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
             self._handler = stat
         else:
             self._handler = None
-        self._limit = None
 
         # Metrics
         self._valid_metrics = ['mean', 'variance']
@@ -103,10 +91,8 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
 
         # User-defined handler?
-        if callable(self._handler):
-            self._limit = self._handler(y) * self.ratio
-        else:
-            self._limit, self._handler = self.get_stat_limit(y)
+        if not callable(self._handler):
+            self._handler = self._get_stat_handler(y)
 
         return self
 
@@ -128,15 +114,14 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
         if not isinstance(X, np.ndarray):
             X = np.array(X)
 
+        # User-defined handler?
+        if not callable(self._handler):
+            self._handler = self._get_stat_handler(y)
+
         # Build database for every output
         for serie in y:
-            # User-defined handler?
-            if callable(self._handler):
-                self._limit = self._handler(serie) * self.ratio
-            else:
-                self._limit, self._handler = self.get_stat_limit(serie)
 
-            partial_X = self.calculate_partial_X(serie)
+            partial_X = _window_maker_delegate(serie, handler=self._handler, metrics=self.metrics)
 
             # We begin in the third sample, some stats need at least two samples to work
             serie = y[2:]
@@ -146,35 +131,13 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
 
         return X
 
-    def calculate_partial_X(self, serie):
-        partial_X = []
-
-        for index, output in enumerate(serie[2:]):
-            index = index + 2
-
-            # First two previous samples
-            pivot = index-2
-            samples = serie[pivot:index]
-
-            while self._handler(samples) < self._limit and pivot - 1 >= 0:
-                pivot = pivot - 1
-                samples = serie[pivot:index]
-
-            # Once we have the samples, gather info about them
-            samples_info = []
-            for metric in self.metrics:
-                samples_info.append(_get_samples_info(samples, metric))
-            partial_X.append(samples_info)
-
-        return partial_X
-
-    def get_stat_limit(self, y):
-        # Define stat handlers
+    def _get_stat_handler(self, y):
+        # Defined stat handlers
         def variance(samples):
             return np.var(samples)
 
         if self.stat == 'variance':
-            return variance(y) * self.ratio, variance
+            return variance
         else:
             raise ValueError("Invalid stat argument for dinamic window. Please use ['variance'] or own stat function.")
 
@@ -234,7 +197,7 @@ class RangeWindow(BaseEstimator, TransformerMixin):
                 samples_info = []
 
                 for metric in self._metrics:
-                    samples_info.append(_get_samples_info(samples, metric))
+                    print "h"
                 partial_X.append(samples_info)
 
             # We begin in the third sample
@@ -249,19 +212,6 @@ class RangeWindow(BaseEstimator, TransformerMixin):
         return allowed_range.min() < value < allowed_range.max()
 
 
-def _get_samples_info(samples, metric):
-    # Valid metric?
-    valid_metrics = ['mean', 'variance']
-    if metric not in valid_metrics and not callable(metric):
-        raise ValueError("Unkown '%s' metric" % metric)
-
-    if callable(metric):
-        return metric(samples)
-    else:
-        return {
-            'mean': np.mean(samples),
-            'variance': np.var(samples)
-        }.get(metric)
 
 
 def append_inputs(X, X_new, y):

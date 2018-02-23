@@ -1,8 +1,8 @@
 # -*- coding: utf8 -*-
 
 import sys
-sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf')
-sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf/pipeline')
+sys.path.append('/Users/x5981md/time-series-forecasting/tsf')
+sys.path.append('/Users/x5981md/time-series-forecasting/tsf/pipeline')
 from time_series_forescaster import SimpleAR, DinamicWindow, RangeWindow
 from tsf_pipeline import TSFPipeline
 from sklearn.linear_model import LassoCV
@@ -11,6 +11,7 @@ from sklearn.metrics import mean_squared_error
 import click
 import numpy as np
 import pandas as pd
+
 
 # Some stat handlers examples
 def var_function(samples):
@@ -21,16 +22,30 @@ def mean_function(samples):
     return np.mean(samples)
 
 
+# RVR umbralizer
+def umbralizer(sample):
+    if sample < 1000:
+        return 2
+    elif 1000 < sample < 1990:
+        return 1
+    else:
+        return 0
+
+
 @click.command()
 @click.option('--files', '-f', type=click.Choice(['temp.txt', 'humidity.txt', 'windDir.txt', 'windSpeed.txt',
-                                                 'QNH.txt']), multiple=True)
+                                                 'QNH.txt', 'RVR.txt']), multiple=True)
 @click.option('--ratio', '-r', default=0.1, required=False, help=u'Ratio de stat total')
 @click.option('--test_r', '-t', default=0.3, required=False, help=u'Ratio de muestras para test')
 def run_pipeline_test(files, ratio, test_r):
 
     # Read
-    data = read_data(files)
-    #data = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [11, 12, 13, 14, 15, 16, 17, 18, 19, 20]])
+    #data = read_data(files)
+    data = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [11, 12, 13, 14, 15, 16, 17, 18, 19, 20], [21, 22, 23, 24, 25, 26, 27, 28, 29, 30]])
+
+    # RVR preprocessing
+
+
 
     # Split
     train, test = split_train_test(data, test_r)
@@ -38,7 +53,6 @@ def run_pipeline_test(files, ratio, test_r):
     # Create pipeline
     pipe = TSFPipeline([('ar', SimpleAR(n_prev=2)),
                         ('dw', DinamicWindow(ratio=ratio)),
-                        ('rw', RangeWindow()),
                         ('regressor', LassoCV(random_state=0))])
 
     # Fit pipeline
