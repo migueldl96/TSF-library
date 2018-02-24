@@ -4,3 +4,4 @@ misc.xml
 .idea/workspace.xml
 tsf/__init__.pyc
 tsf/time_series_forescaster.pyc
+*.pyc
