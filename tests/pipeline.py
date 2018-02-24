@@ -1,13 +1,14 @@
 # -*- coding: utf8 -*-
 
 import sys
-sys.path.append('/Users/x5981md/time-series-forecasting/tsf')
-sys.path.append('/Users/x5981md/time-series-forecasting/tsf/pipeline')
+sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf')
+sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf/pipeline')
 from time_series_forescaster import SimpleAR, DinamicWindow, RangeWindow
 from tsf_pipeline import TSFPipeline
 from sklearn.linear_model import LassoCV
 from sklearn.metrics import mean_squared_error
 
+import time
 import click
 import numpy as np
 import pandas as pd
@@ -37,23 +38,20 @@ def umbralizer(sample):
                                                  'QNH.txt', 'RVR.txt']), multiple=True)
 @click.option('--ratio', '-r', default=0.1, required=False, help=u'Ratio de stat total')
 @click.option('--test_r', '-t', default=0.3, required=False, help=u'Ratio de muestras para test')
-def run_pipeline_test(files, ratio, test_r):
+@click.option('--n_jobs', '-j', default=-1, required=False, help=u'Número de procesos en paralelo')
+def run_pipeline_test(files, ratio, test_r, n_jobs):
 
     # Read
-    #data = read_data(files)
-    data = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [11, 12, 13, 14, 15, 16, 17, 18, 19, 20], [21, 22, 23, 24, 25, 26, 27, 28, 29, 30]])
-
-    # RVR preprocessing
-
-
+    data = read_data(files)
+    # data = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [11, 12, 13, 14, 15, 16, 17, 18, 19, 20], [21, 22, 23, 24, 25, 26, 27, 28, 29, 30]])
 
     # Split
     train, test = split_train_test(data, test_r)
 
     # Create pipeline
-    pipe = TSFPipeline([('ar', SimpleAR(n_prev=2)),
-                        ('dw', DinamicWindow(ratio=ratio)),
-                        ('regressor', LassoCV(random_state=0))])
+    pipe = TSFPipeline([('ar', SimpleAR(n_prev=2, n_jobs=n_jobs)),
+                        ('dw', DinamicWindow(ratio=ratio, stat=var_function, n_jobs=n_jobs)),
+                        ('regressor', LassoCV(random_state=0, n_jobs=n_jobs))])
 
     # Fit pipeline
     pipe.fit(X=[], y=train)
