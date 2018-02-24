@@ -3,6 +3,7 @@ from tsf_tools import _window_maker_delegate, _range_window_delegate
 from sklearn.externals.joblib import Parallel, delayed
 from sklearn.base import BaseEstimator, RegressorMixin, TransformerMixin
 from sklearn.linear_model import LassoCV
+import time
 
 
 class TimeSeriesForecaster(BaseEstimator, RegressorMixin):
@@ -33,8 +34,9 @@ class TimeSeriesForecaster(BaseEstimator, RegressorMixin):
 
 
 class SimpleAR(BaseEstimator, TransformerMixin):
-    def __init__(self, n_prev=5):
+    def __init__(self, n_prev=5, n_jobs=-1):
         self.n_prev = n_prev
+        self.n_jobs = n_jobs
 
     def fit(self, X, y=None):
         return self
@@ -57,23 +59,20 @@ class SimpleAR(BaseEstimator, TransformerMixin):
             X = np.array(X)
 
         # We have to get the previous 'n_prev' samples for every 'y' value
-        for serie in y:
-            partial_X = _window_maker_delegate(serie, fixed=self.n_prev)
+        partial_X = Parallel(n_jobs=self.n_jobs)(
+            delayed(_window_maker_delegate)(serie, fixed=self.n_prev) for serie in y)
 
-            # Only 'y' samples offset by 'n_prev' can be forescasted
-            serie = serie[self.n_prev:]
-            serie = np.array(serie)
-
-            # We already have the data, lets append it to our inputs matrix
-            X, serie = append_inputs(X, partial_X, serie)
+        # We already have the data, lets append it to our inputs matrix
+        X = append_inputs(X, partial_X)
 
         return X
 
 
 class DinamicWindow(BaseEstimator, TransformerMixin):
-    def __init__(self, stat='variance', ratio=0.1, metrics=['mean', 'variance']):
+    def __init__(self, stat='variance', ratio=0.1, metrics=['mean', 'variance'], n_jobs=-1):
         self.stat = stat
         self.ratio = ratio
+        self.n_jobs = n_jobs
 
         # Fit attributes
         if callable(stat):
@@ -119,15 +118,11 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
             self._handler = self._get_stat_handler(y)
 
         # Build database for every output
-        for serie in y:
+        partial_X = Parallel(n_jobs=self.n_jobs)(
+            delayed(_window_maker_delegate)(serie, handler=self._handler, metrics=self.metrics) for serie in y)
 
-            partial_X = _window_maker_delegate(serie, handler=self._handler, metrics=self.metrics)
-
-            # We begin in the third sample, some stats need at least two samples to work
-            serie = y[2:]
-
-            # We already have the data, lets append it to our inputs matrix
-            X, serie = append_inputs(X, partial_X, serie)
+        # We already have the data, lets append it to our inputs matrix
+        X = append_inputs(X, partial_X)
 
         return X
 
@@ -143,7 +138,8 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
 
 
 class RangeWindow(BaseEstimator, TransformerMixin):
-    def __init__(self, metrics=['mean', 'variance']):
+    def __init__(self, metrics=['mean', 'variance'], n_jobs=-1):
+        self.n_jobs = n_jobs
 
         # Metrics
         if not hasattr(metrics, "__iter__"):
@@ -156,8 +152,8 @@ class RangeWindow(BaseEstimator, TransformerMixin):
         self._dev = None
 
     def fit(self, X, y=None):
-        # Deviation for range
-        self._dev = (np.max(y) - np.min(y)) / np.mean(y)
+        # Deviation for each serie
+        self._dev = (np.max(y, axis=1) - np.min(y, axis=1)) / np.mean(y, axis=1)
         return self
 
     def transform(self, X, y=None):
@@ -174,15 +170,14 @@ class RangeWindow(BaseEstimator, TransformerMixin):
         if not isinstance(X, np.ndarray):
             X = np.array(X)
 
+        # Deviation for each serie
+        self._dev = (np.max(y, axis=1) - np.min(y, axis=1)) / np.mean(y, axis=1)
+
         # Build database for every output
-        for serie in y:
-            # Deviation for range
-            self._dev = (np.max(serie) - np.min(serie)) / np.var(serie)
+        partial_X = Parallel(n_jobs=self.n_jobs)(
+            delayed(_range_window_delegate)(serie, self._dev[index], self._metrics) for index, serie in enumerate(y))
 
-            partial_X = _range_window_delegate(serie, self._dev, self._metrics)
-
-            # We already have the data, lets append it to our inputs matrix
-            X, serie = append_inputs(X, partial_X, serie)
+        X = append_inputs(X, partial_X)
 
         return X
 
@@ -190,10 +185,13 @@ class RangeWindow(BaseEstimator, TransformerMixin):
         return allowed_range.min() < value < allowed_range.max()
 
 
-def append_inputs(X, X_new, y):
+def append_inputs(X, X_new):
     # We must append an ndarray-type
     if not isinstance(X_new, np.ndarray):
         X_new = np.array(X_new)
+
+    # We need a 2D array
+    X_new = X_new.transpose((1, 0, 2)).reshape((X_new.shape[1], X_new.shape[0]*X_new.shape[2]))
 
     # Is X empty?
     if X.size == 0:
@@ -214,6 +212,4 @@ def append_inputs(X, X_new, y):
             # Now we can append
             X = np.append(bigger, smaller, 1)
 
-            # We cant predict first 'dif' values from 'y'
-            y = y[dif:]
-    return X, y
+    return X
