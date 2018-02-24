@@ -36,7 +36,11 @@ class TSFPipeline(Pipeline):
         Xt, fit_params = self._fit(X, y, **fit_params)
 
         if self._final_estimator is not None:
-            Yt = self._reshape_outputs(Xt, y)
+            if len(y.shape) == 1:
+                Yt = self._reshape_outputs(Xt, y)
+            else:
+                Yt = self._reshape_outputs(Xt, y[0])
+
             self._final_estimator.fit(Xt, Yt, **fit_params)
 
         return self
@@ -62,8 +66,12 @@ class TSFPipeline(Pipeline):
         return self.steps[-1][-1].score(Xt, Yt, **score_params)
 
     def offset_y(self, real_y, predicted_y):
-        offset = len(real_y) - len(predicted_y)
-        return real_y[offset:]
+        if len(real_y.shape) == 1:
+            offset = len(real_y) - len(predicted_y)
+            return real_y[offset:]
+        else:
+            offset = len(real_y[0]) - len(predicted_y)
+            return real_y[0, offset:]
 
     def _reshape_outputs(self, X, y=None):
         offset = len(y) - X.shape[0]
