@@ -1,5 +1,5 @@
 import numpy as np
-from tsf_tools import _window_maker_delegate
+from tsf_tools import _window_maker_delegate, _range_window_delegate
 from sklearn.externals.joblib import Parallel, delayed
 from sklearn.base import BaseEstimator, RegressorMixin, TransformerMixin
 from sklearn.linear_model import LassoCV
@@ -164,10 +164,7 @@ class RangeWindow(BaseEstimator, TransformerMixin):
         X = self.fit_transform(X, y)
         return X
 
-    def fit_transform(self, X, y=None):
-        # Deviation for range
-        self._dev = (np.max(y) - np.min(y)) / np.var(y)
-
+    def fit_transform(self, X, y=None, **fit_params):
         # Y must be the time serie!
         if y is None:
             raise ValueError("TSF transformers need to receive the time serie data as Y input.\
@@ -179,29 +176,10 @@ class RangeWindow(BaseEstimator, TransformerMixin):
 
         # Build database for every output
         for serie in y:
-            partial_X = []
-            for index, output in enumerate(serie[2:]):
-                index = index + 2
+            # Deviation for range
+            self._dev = (np.max(serie) - np.min(serie)) / np.var(serie)
 
-                # Allowed range from the sample before the output
-                previous = serie[index-1]
-                allowed_range = np.arange(previous - self._dev, previous + self._dev)
-
-                # Get the samples in the range
-                pivot = index - 1
-                while pivot - 1 >= 0 and self._in_range(serie[pivot - 1], allowed_range):
-                    pivot = pivot - 1
-
-                # Once we have the samples, gather info about them
-                samples = serie[pivot:index]
-                samples_info = []
-
-                for metric in self._metrics:
-                    print "h"
-                partial_X.append(samples_info)
-
-            # We begin in the third sample
-            serie = serie[2:]
+            partial_X = _range_window_delegate(serie, self._dev, self._metrics)
 
             # We already have the data, lets append it to our inputs matrix
             X, serie = append_inputs(X, partial_X, serie)
@@ -210,8 +188,6 @@ class RangeWindow(BaseEstimator, TransformerMixin):
 
     def _in_range(self, value, allowed_range):
         return allowed_range.min() < value < allowed_range.max()
-
-
 
 
 def append_inputs(X, X_new, y):
