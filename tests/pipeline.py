@@ -1,10 +1,13 @@
 # -*- coding: utf8 -*-
 
+import time
 import sys
-sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf')
-sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf/pipeline')
+sys.path.append('/Users/x5981md/time-series-forecasting/tsf')
+sys.path.append('/Users/x5981md/time-series-forecasting/tsf/pipeline')
+sys.path.append('/Users/x5981md/time-series-forecasting/tsf/grid_search')
 from time_series_forescaster import SimpleAR, DinamicWindow, RangeWindow
 from tsf_pipeline import TSFPipeline
+from tsf_gridsearchcv import TSFGridSearchCV
 from sklearn.linear_model import LassoCV
 from sklearn.metrics import mean_squared_error
 
@@ -42,8 +45,8 @@ def umbralizer(sample):
 def run_pipeline_test(files, ratio, test_r, n_jobs):
 
     # Read
-    data = read_data(files)
-    # data = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [11, 12, 13, 14, 15, 16, 17, 18, 19, 20], [21, 22, 23, 24, 25, 26, 27, 28, 29, 30]])
+    # data = read_data(files)
+    data = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [11, 12, 13, 14, 15, 16, 17, 18, 19, 20], [21, 22, 23, 24, 25, 26, 27, 28, 29, 30]])
 
     # Split
     train, test = split_train_test(data, test_r)
@@ -53,8 +56,27 @@ def run_pipeline_test(files, ratio, test_r, n_jobs):
                         ('dw', DinamicWindow(ratio=ratio, stat=var_function, n_jobs=n_jobs)),
                         ('regressor', LassoCV(random_state=0, n_jobs=n_jobs))])
 
+    # Param grid
+    params = [
+        {
+            'ar__n_prev': [1, 2, 3, 4]
+        },
+        {
+            'dw__ratio': [0.1, 0.2, 0.3]
+        },
+        {
+            'random_state': [0, 1, 2]
+        }
+    ]
+    gs = TSFGridSearchCV(pipe, params)
+    gs.fit(X=[], y=data)
+    quit()
     # Fit pipeline
+    start = time.time()
     pipe.fit(X=[], y=train)
+    end = time.time()
+    print "TIME: " + str(end-start)
+    quit()
 
     # Predict using Pipeline
     predicted_train = pipe.predict(train)
