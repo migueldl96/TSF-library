@@ -74,5 +74,9 @@ class TSFPipeline(Pipeline):
             return real_y[0, offset:]
 
     def _reshape_outputs(self, X, y=None):
-        offset = len(y) - X.shape[0]
-        return y[offset:]
+        if len(y.shape) == 1:
+            offset = len(y) - X.shape[0]
+            return y[offset:]
+        else:
+            offset = len(y[0]) - X.shape[0]
+        return y[0, offset:]

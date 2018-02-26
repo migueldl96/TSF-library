@@ -45,7 +45,7 @@ def umbralizer(sample):
 def run_pipeline_test(files, ratio, test_r, n_jobs):
 
     # Read
-    # data = read_data(files)
+    #data = read_data(files)
     data = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [11, 12, 13, 14, 15, 16, 17, 18, 19, 20], [21, 22, 23, 24, 25, 26, 27, 28, 29, 30]])
 
     # Split
@@ -70,7 +70,7 @@ def run_pipeline_test(files, ratio, test_r, n_jobs):
     ]
     gs = TSFGridSearchCV(pipe, params)
     gs.fit(X=[], y=data)
-    quit()
+
     # Fit pipeline
     start = time.time()
     pipe.fit(X=[], y=train)
