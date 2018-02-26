@@ -119,7 +119,7 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
 
         # Build database for every output
         partial_X = Parallel(n_jobs=self.n_jobs)(
-            delayed(_window_maker_delegate)(serie, handler=self._handler, metrics=self.metrics) for serie in y)
+            delayed(_window_maker_delegate)(serie, handler=self._handler, metrics=self.metrics, ratio=self.ratio) for serie in y)
 
         # We already have the data, lets append it to our inputs matrix
         X = append_inputs(X, partial_X)
@@ -205,11 +205,13 @@ def append_inputs(X, X_new):
             X = np.append(X, X_new, axis=1)
         else:
             # If not, we delete first 'dif' rows from the bigger matrix and from the time serie outputs
-            bigger, smaller = (X, X_new) if x_samples > x_new_samples else (X_new, X)
             dif = np.abs(x_new_samples-x_samples)
-            bigger = np.delete(bigger, range(0, dif, 1), 0)
+            if x_samples > x_new_samples:
+                X = np.delete(X, range(0, dif, 1), 0)
+            else:
+                X_new = np.delete(X_new, range(0, dif, 1), 0)
 
             # Now we can append
-            X = np.append(bigger, smaller, 1)
+            X = np.append(X, X_new, 1)
 
     return X
