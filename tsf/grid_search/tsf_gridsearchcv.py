@@ -17,7 +17,7 @@ class TSFGridSearchCV(GridSearchCV):
 
         # Estimator params
         estim_params = self.param_grid[-1]
-        estimator = self.estimator.steps[-1][1]
+        estimator_name, estimator = self.estimator.steps[-1]
 
         # Generate transformer parameter combinations
         trans_params_dict = { k: v for d in trans_params for k, v in d.items() }
@@ -47,7 +47,7 @@ class TSFGridSearchCV(GridSearchCV):
 
                 # Little transformation for estimator dict keys
                 for key in best_estimator_params.keys():
-                    self.best_params_['regressor__' + key] = self.best_params_.pop(key)
+                    self.best_params_[estimator_name + "__" + key] = self.best_params_.pop(key)
 
         # Set the best estimator
         self.best_estimator_ = clone(self.estimator).set_params(
