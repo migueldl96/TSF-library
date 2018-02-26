@@ -46,7 +46,8 @@ def run_pipeline_test(files, ratio, test_r, n_jobs):
 
     # Read
     #data = read_data(files)
-    data = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [11, 12, 13, 14, 15, 16, 17, 18, 19, 20], [21, 22, 23, 24, 25, 26, 27, 28, 29, 30]])
+    data = np.array([[1, 2, 43, 4, 5, 6, 7, 8, 9, 10, 44, 65, 67], [11, -2, 13, 14, 15, 16, 99, 18, 19, 20, 44, 65, 67],
+                     [-121, 22, 23, 24, 15, 26, 27, 28, 29, 30, 44, 65, 67]])
 
     # Split
     train, test = split_train_test(data, test_r)
@@ -71,6 +72,9 @@ def run_pipeline_test(files, ratio, test_r, n_jobs):
     gs = TSFGridSearchCV(pipe, params)
     gs.fit(X=[], y=data)
 
+    print gs.best_params_
+
+    gs.predict(test)
     # Fit pipeline
     start = time.time()
     pipe.fit(X=[], y=train)

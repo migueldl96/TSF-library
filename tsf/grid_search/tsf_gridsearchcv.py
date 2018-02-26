@@ -1,10 +1,14 @@
 from sklearn.model_selection import GridSearchCV
 from tsf_pipeline import TSFPipeline
 from itertools import product
+from sklearn.base import clone
 
 
+# TODO: Control de errores
 class TSFGridSearchCV(GridSearchCV):
     def fit(self, X, y=None, groups=None, **fit_params):
+        best_score = 0
+
         # Transformers data
         trans_params = self.param_grid[:-1]
         trans_list = self.estimator.steps[:-1]
@@ -26,11 +30,28 @@ class TSFGridSearchCV(GridSearchCV):
             trans_pipe.set_params(**combo)
             Xt, Yt = trans_pipe.transform(X=[], y=y)
 
-            print "transformed!"
-
             # Second step: We grid search over the final estimator
             estimator_gs = GridSearchCV(estimator, estim_params)
             estimator_gs.fit(Xt, Yt)
 
-            print "SCORE: " + str(estimator_gs.score(Xt, Yt))
-            quit()
+            # Did we find a best model ?
+            score = estimator_gs.score(Xt, Yt)
+            if score > best_score:
+                best_score = score
+                self.best_params_ = combo
+                best_estimator_params = estimator_gs.best_params_
+                self.best_params_.update(best_estimator_params)
+
+                best_Xt = Xt
+                best_Yy = Yt
+
+                # Little transformation for estimator dict keys
+                for key in best_estimator_params.keys():
+                    self.best_params_['regressor__' + key] = self.best_params_.pop(key)
+
+        # Set the best estimator
+        self.best_estimator_ = clone(self.estimator).set_params(
+            **self.best_params_)
+        self.best_estimator_.fit(X=best_Xt, y=best_Yy)
+
+        return self
