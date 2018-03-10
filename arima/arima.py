@@ -3,6 +3,8 @@
 import pandas as pd
 import click
 import datetime
+import matplotlib.pyplot as pl
+
 from statsmodels.tsa.arima_model import *
 from sklearn.metrics import mean_squared_error
 
@@ -25,28 +27,23 @@ def run_arima(data, n_prev, test):
 
     # Split
     n_data = len(data)
-    n_test = int(n_data * test)
-    test, train = data[n_test:], data[:n_test]
+    n_train = int(n_data * (1-test))
+    n_test = n_data - n_train
+    test, train = data[n_train:], data[:n_train]
 
     # Model
-    train_data = [x for x in train]
-    predictions = list()
+    model = ARIMA(train, order=(n_prev, 1, 0))
 
-    # walk-forward validation
-    for t in range(len(test)):
-        # fit model
-        model = ARIMA(train_data, order=(n_prev,1,0))
-        model_fit = model.fit(disp=False)
-        # one step forecast
-        yhat = model_fit.forecast()[0]
-        # store forecast and ob
-        predictions.append(yhat)
-        train_data.append(test[t])
+    # Fit
+    model_fit = model.fit(disp=0)
 
-    # evaluate forecasts
-    mse = mean_squared_error(test, predictions)
+    # Multi step forecast
+    yhat = model_fit.forecast(steps=n_test)[0]
+    print yhat
 
-    print('Test MSE: %.3f' % mse)
+    # Evaluate forecasts
+    mse = mean_squared_error(test, yhat)
+    print("MSE: " + str(mse))
 
 
 if __name__ == "__main__":
