@@ -3,7 +3,7 @@
 import sys
 sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf')
 sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf/pipeline')
-from time_series_forescaster import SimpleAR, DinamicWindow, RangeWindow
+from time_series_forescaster import SimpleAR, DinamicWindow, RangeWindow, ClassChange
 from tsf_pipeline import TSFPipeline
 from sklearn.linear_model import LassoCV
 from sklearn.metrics import mean_squared_error
@@ -49,7 +49,8 @@ def run_pipeline_test(files, ratio, test_r, n_jobs):
     train, test = split_train_test(data, test_r)
 
     # Create pipeline
-    pipe = TSFPipeline([('ar', SimpleAR(n_prev=2, n_jobs=n_jobs)),
+    pipe = TSFPipeline([('cc', ClassChange(umbralizer=umbralizer)),
+                        ('ar', SimpleAR(n_prev=4)),
                         ('dw', DinamicWindow(ratio=ratio, stat=var_function, n_jobs=n_jobs)),
                         ('regressor', LassoCV(random_state=0, n_jobs=n_jobs))])
 

@@ -1,5 +1,5 @@
 import numpy as np
-from tsf_tools import _window_maker_delegate, _range_window_delegate
+from tsf_tools import _fixed_window_delegate, _range_window_delegate, _dinamic_window_delegate, _classchange_window_delegate
 from sklearn.externals.joblib import Parallel, delayed
 from sklearn.base import BaseEstimator, RegressorMixin, TransformerMixin
 from sklearn.linear_model import LassoCV
@@ -60,7 +60,7 @@ class SimpleAR(BaseEstimator, TransformerMixin):
 
         # We have to get the previous 'n_prev' samples for every 'y' value
         partial_X = Parallel(n_jobs=self.n_jobs)(
-            delayed(_window_maker_delegate)(serie, fixed=self.n_prev) for serie in y)
+            delayed(_fixed_window_delegate)(serie, n_prev=self.n_prev) for serie in y)
 
         # We already have the data, lets append it to our inputs matrix
         X = append_inputs(X, partial_X)
@@ -119,7 +119,7 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
 
         # Build database for every output
         partial_X = Parallel(n_jobs=self.n_jobs)(
-            delayed(_window_maker_delegate)(serie, handler=self._handler, metrics=self.metrics, ratio=self.ratio) for serie in y)
+            delayed(_dinamic_window_delegate)(serie, handler=self._handler, metrics=self.metrics, ratio=self.ratio) for serie in y)
 
         # We already have the data, lets append it to our inputs matrix
         X = append_inputs(X, partial_X)
@@ -144,8 +144,6 @@ class RangeWindow(BaseEstimator, TransformerMixin):
         # Metrics
         if not hasattr(metrics, "__iter__"):
             raise ValueError("'metrics' param should be iterable.")
-        else:
-            self._metrics = metrics
         self._metrics = metrics
 
         # Fit attributes
@@ -185,13 +183,67 @@ class RangeWindow(BaseEstimator, TransformerMixin):
         return allowed_range.min() < value < allowed_range.max()
 
 
+class ClassChange(BaseEstimator, TransformerMixin):
+    def __init__(self, umbralizer, metrics=['mean', 'variance'], n_jobs=-1):
+        # Metrics
+        if not hasattr(metrics, "__iter__"):
+            raise ValueError("'metrics' param should be iterable.")
+        self._metrics = metrics
+
+        self.n_jobs = n_jobs
+
+        self.umbralizer = umbralizer
+
+        self.umbralized_serie = None
+
+    def fit(self, X, y=None):
+        self.umbralized_serie = map(self.umbralizer, y[0])
+
+    def transform(self, X, y=None):
+        # We need al least one exog serie
+        if len(y.shape) == 1 or y.shape[0] < 2:
+            raise ValueError("ClassChange need tor receive one exogenous serie at least. Please \
+                             an 'y' 2D array with at least 2 rows.")
+        Xt = self.fit_transform(X, y)
+
+        return Xt
+
+    def fit_transform(self, X, y=None, **fit_params):
+        # Y must be the time serie!
+        if y is None:
+            raise ValueError("TSF transformers need to receive the time serie data as Y input.\
+                                 Please call fit before transforming.")
+        # Y must be 2D
+        if len(y.shape) == 1:
+            y = np.array([y])
+
+        # X must be ndarray-type
+        if not isinstance(X, np.ndarray):
+            X = np.array(X)
+
+        # We need al least one exog serie
+        if len(y.shape) == 1 or y.shape[0] < 2:
+            raise ValueError("ClassChange need to receive one exogenous serie at least. Please use\
+                                a 'y' 2D array with at least 2 rows.")
+
+        # Umbralize endog
+        self.umbralized_serie = map(self.umbralizer, y[0])
+
+        # Get exogs series info
+        partial_X = _classchange_window_delegate(self.umbralized_serie, y[1:], self._metrics)
+
+        X = append_inputs(X, partial_X)
+        return X
+
+
 def append_inputs(X, X_new):
     # We must append an ndarray-type
     if not isinstance(X_new, np.ndarray):
         X_new = np.array(X_new)
 
     # We need a 2D array
-    X_new = X_new.transpose((1, 0, 2)).reshape((X_new.shape[1], X_new.shape[0]*X_new.shape[2]))
+    if len(X_new.shape) == 3:
+        X_new = X_new.transpose((1, 0, 2)).reshape((X_new.shape[1], X_new.shape[0]*X_new.shape[2]))
 
     # Is X empty?
     if X.size == 0:

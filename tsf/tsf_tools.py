@@ -1,21 +1,6 @@
 import numpy as np
 
 
-def _window_maker_delegate(serie, fixed=None, handler=None, metrics=None, ratio=0.1):
-    if fixed is not None:
-        serie_data = _fixed_window_delegate(serie, fixed)
-    else:
-        # We need a handler and metrics
-        if handler is None:
-            NotImplementedError("Handlers must be specified to create the window.")
-        if metrics is None or not hasattr(metrics, "__iter__"):
-            ValueError("Metrics must be specified and iterable")
-
-        serie_data = _dinamic_window_delegate(serie, handler, metrics, ratio)
-
-    return serie_data
-
-
 def _fixed_window_delegate(serie, n_prev):
     partial_X = []
     begin = 0
@@ -31,7 +16,6 @@ def _fixed_window_delegate(serie, n_prev):
 
 
 def _dinamic_window_delegate(serie, handler, metrics, ratio):
-
     limit = handler(serie) * ratio
 
     partial_X = []
@@ -77,6 +61,33 @@ def _range_window_delegate(serie, dev, metrics):
         for metric in metrics:
             samples_info.append(_get_samples_info(samples, metric))
         partial_X.append(samples_info)
+
+    return np.array(partial_X)
+
+
+def _classchange_window_delegate(umbralized, exogs, metrics):
+    partial_X = []
+
+    # Info from every output from all exogs series
+    for index, output in enumerate(umbralized):
+        index = index + 1
+        output_info = []
+        pivot = index - 1
+        previous = umbralized[pivot]
+
+        # Window size
+        while pivot > 0 and previous == umbralized[pivot - 1]:
+            pivot = pivot - 1
+        start = pivot
+        end = index
+
+        # Info from exog series
+        for exog in exogs:
+            samples = exog[start:end]
+            for metric in metrics:
+                output_info.append(_get_samples_info(samples, metric))
+
+        partial_X.append(output_info)
 
     return np.array(partial_X)
 
