@@ -5,34 +5,6 @@ from sklearn.base import BaseEstimator, RegressorMixin, TransformerMixin
 from sklearn.linear_model import LassoCV
 import time
 
-
-class TimeSeriesForecaster(BaseEstimator, RegressorMixin):
-    def __init__(self, base_model=LassoCV()):
-        self._model = base_model
-
-    def set_params(self, **params):
-        for param, value in params.iteritems():
-            if param in self.get_params():
-                super(TimeSeriesForecaster, self).set_params(**{param: value})
-            else:
-                self._model.set_params(**{param: value})
-        return self
-
-    def fit(self, X, y=None):
-        # We must fit with the same number of targets as the inputs matrix
-        y = self.get_targets(X, y)
-
-        return self._model.fit(X, y)
-
-    def predict(self, X, y=None):
-        return self._model.predict(X)
-
-    def get_targets(self, X, y):
-        samples_x = X.shape[0]
-        offset_y = y.shape[0] - samples_x
-        return y[offset_y:]
-
-
 class SimpleAR(BaseEstimator, TransformerMixin):
     def __init__(self, n_prev=5, n_jobs=-1):
         self.n_prev = n_prev
