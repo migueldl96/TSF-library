@@ -69,7 +69,7 @@ class SimpleAR(BaseEstimator, TransformerMixin):
 
 
 class DinamicWindow(BaseEstimator, TransformerMixin):
-    def __init__(self, stat='variance', ratio=0.1, metrics=['mean', 'variance'], n_jobs=-1):
+    def __init__(self, stat='variance', ratio=0.1, metrics=None, n_jobs=-1):
         self.stat = stat
         self.ratio = ratio
         self.n_jobs = n_jobs
@@ -81,11 +81,12 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
             self._handler = None
 
         # Metrics
-        self._valid_metrics = ['mean', 'variance']
-        if not hasattr(metrics, "__iter__"):
-            raise ValueError("'metrics' param should be iterable.")
+        if metrics is None:
+            self._metrics = ['mean', 'variance']
         else:
-            self.metrics = metrics
+            if not hasattr(metrics, "__iter__"):
+                raise ValueError("'metrics' param should be iterable.")
+            self._metrics = metrics
 
     def fit(self, X, y=None):
 
@@ -119,7 +120,7 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
 
         # Build database for every output
         partial_X = Parallel(n_jobs=self.n_jobs)(
-            delayed(_dinamic_window_delegate)(serie, handler=self._handler, metrics=self.metrics, ratio=self.ratio) for serie in y)
+            delayed(_dinamic_window_delegate)(serie, handler=self._handler, metrics=self._metrics, ratio=self.ratio) for serie in y)
 
         # We already have the data, lets append it to our inputs matrix
         X = append_inputs(X, partial_X)
@@ -138,16 +139,19 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
 
 
 class RangeWindow(BaseEstimator, TransformerMixin):
-    def __init__(self, metrics=['mean', 'variance'], n_jobs=-1):
-        self.n_jobs = n_jobs
-
+    def __init__(self, metrics=None, n_jobs=-1):
         # Metrics
-        if not hasattr(metrics, "__iter__"):
-            raise ValueError("'metrics' param should be iterable.")
-        self._metrics = metrics
+        if metrics is None:
+            self._metrics = ['mean', 'variance']
+        else:
+            if not hasattr(metrics, "__iter__"):
+                raise ValueError("'metrics' param should be iterable.")
+            self._metrics = metrics
 
         # Fit attributes
         self._dev = None
+
+        self.n_jobs = n_jobs
 
     def fit(self, X, y=None):
         # Deviation for each serie
@@ -184,11 +188,14 @@ class RangeWindow(BaseEstimator, TransformerMixin):
 
 
 class ClassChange(BaseEstimator, TransformerMixin):
-    def __init__(self, umbralizer, metrics=['mean', 'variance'], n_jobs=-1):
+    def __init__(self, umbralizer, metrics=None, n_jobs=-1):
         # Metrics
-        if not hasattr(metrics, "__iter__"):
-            raise ValueError("'metrics' param should be iterable.")
-        self._metrics = metrics
+        if metrics is None:
+            self._metrics = ['mean', 'variance']
+        else:
+            if not hasattr(metrics, "__iter__"):
+                raise ValueError("'metrics' param should be iterable.")
+            self._metrics = metrics
 
         self.n_jobs = n_jobs
 

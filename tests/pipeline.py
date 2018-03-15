@@ -3,12 +3,13 @@
 import sys
 sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf')
 sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf/pipeline')
+sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf/grid_search')
 from time_series_forescaster import SimpleAR, DinamicWindow, RangeWindow, ClassChange
 from tsf_pipeline import TSFPipeline
+from tsf_gridsearchcv import TSFGridSearchCV
 from sklearn.linear_model import LassoCV
 from sklearn.metrics import mean_squared_error
 
-import time
 import click
 import numpy as np
 import pandas as pd
@@ -43,7 +44,8 @@ def run_pipeline_test(files, ratio, test_r, n_jobs):
 
     # Read
     data = read_data(files)
-    # data = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [11, 12, 13, 14, 15, 16, 17, 18, 19, 20], [21, 22, 23, 24, 25, 26, 27, 28, 29, 30]])
+    #data = np.array([[1, 2, 43, 4, 5, 6, 7, 8, 9, 10, 44, 65, 67], [11, -2, 13, 14, 15, 16, 99, 18, 19, 20, 44, 65, 67],
+    #                [-121, 22, 23, 24, 15, 26, 27, 28, 29, 30, 44, 65, 67]])
 
     # Split
     train, test = split_train_test(data, test_r)
@@ -54,12 +56,30 @@ def run_pipeline_test(files, ratio, test_r, n_jobs):
                         ('dw', DinamicWindow(ratio=ratio, stat=var_function, n_jobs=n_jobs)),
                         ('regressor', LassoCV(random_state=0, n_jobs=n_jobs))])
 
-    # Fit pipeline
-    pipe.fit(X=[], y=train)
+    # Param grid
+    params = [
+        {
+            'ar__n_prev': [3, 4]
+        },
+        {
+            'dw__ratio': [0.2, 0.3]
+        },
+        {
+            'random_state': [0, 1, 2]
+        }
+    ]
+
+    # Create and fit TSFGridSearch
+    gs = TSFGridSearchCV(pipe, params)
+    gs.fit(X=[], y=data)
+
+    gs.predict(test)
 
     # Predict using Pipeline
-    predicted_train = pipe.predict(train)
-    predicted_test = pipe.predict(test)
+    predicted_train = gs.predict(train)
+    predicted_test = gs.predict(test)
+
+    print gs.best_params_
 
     # MSE
     mse_train = mean_squared_error(pipe.offset_y(train, predicted_train), predicted_train)
