@@ -5,6 +5,7 @@ from sklearn.base import BaseEstimator, RegressorMixin, TransformerMixin
 from sklearn.linear_model import LassoCV
 import time
 
+
 class SimpleAR(BaseEstimator, TransformerMixin):
     def __init__(self, n_prev=5, n_jobs=-1):
         self.n_prev = n_prev
