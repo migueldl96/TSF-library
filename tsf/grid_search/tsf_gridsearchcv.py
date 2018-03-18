@@ -37,7 +37,7 @@ class TSFGridSearchCV(GridSearchCV):
         for combo in combos:
             # First step: We get the transformation for each combo
             trans_pipe.set_params(**combo)
-            print "Transformando!"
+
             Xt, Yt = trans_pipe.transform(X=[], y=y)
 
             # Second step: We grid search over the final estimator

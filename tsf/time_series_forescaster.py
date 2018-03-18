@@ -15,21 +15,23 @@ class SimpleAR(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        X = self.fit_transform(X, y=y)
-        return X
+        Xt = self.fit_transform(X, y=y)
+        return Xt
 
     def fit_transform(self, X, y=None, **fit_params):
         # Y must be the time serie!
         if y is None:
             raise ValueError("TSF transformers need to receive the time serie data as Y input.")
 
-        # Y must be 2D
-        if len(y.shape) == 1:
-            y = np.array([y])
-
         # X must be ndarray-type
         if not isinstance(X, np.ndarray):
             X = np.array(X)
+        if not isinstance(y, np.ndarray):
+            y = np.array(y)
+
+        # Y must be 2D
+        if len(y.shape) == 1:
+            y = np.array([y])
 
         # We have to get the previous 'n_prev' samples for every 'y' value
         partial_X = Parallel(n_jobs=self.n_jobs)(
@@ -70,8 +72,8 @@ class DinamicWindow(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        X = self.fit_transform(X, y=y)
-        return X
+        Xt = self.fit_transform(X, y=y)
+        return Xt
 
     def fit_transform(self, X, y=None, **fit_params):
 
@@ -132,8 +134,8 @@ class RangeWindow(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        X = self.fit_transform(X, y)
-        return X
+        Xt = self.fit_transform(X, y)
+        return Xt
 
     def fit_transform(self, X, y=None, **fit_params):
         # Y must be the time serie!
