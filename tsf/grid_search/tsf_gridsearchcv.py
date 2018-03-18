@@ -37,11 +37,12 @@ class TSFGridSearchCV(GridSearchCV):
         for combo in combos:
             # First step: We get the transformation for each combo
             trans_pipe.set_params(**combo)
-            print "Transformando!"
+
             Xt, Yt = trans_pipe.transform(X=[], y=y)
 
             # Second step: We grid search over the final estimator
-            super(TSFGridSearchCV, self).__init__(final_estimator, final_estim_params)
+            print self.cv
+            super(TSFGridSearchCV, self).__init__(final_estimator, final_estim_params, cv=self.cv)
             super(TSFGridSearchCV, self).fit(Xt, Yt)
 
             # Did we find a better model ?

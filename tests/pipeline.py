@@ -9,6 +9,7 @@ from tsf_pipeline import TSFPipeline
 from tsf_gridsearchcv import TSFGridSearchCV
 from sklearn.linear_model import LassoCV
 from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import KFold
 
 import click
 import numpy as np
@@ -69,8 +70,11 @@ def run_pipeline_test(files, ratio, test_r, n_jobs):
         }
     ]
 
+    # Cross validation GridSearch
+    cv = KFold(n_splits=3, random_state=0)
+
     # Create and fit TSFGridSearch
-    gs = TSFGridSearchCV(pipe, params)
+    gs = TSFGridSearchCV(pipe, params, cv=cv)
     gs.fit(X=[], y=data)
 
     gs.predict(test)
