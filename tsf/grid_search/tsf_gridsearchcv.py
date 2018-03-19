@@ -41,7 +41,6 @@ class TSFGridSearchCV(GridSearchCV):
             Xt, Yt = trans_pipe.transform(X=[], y=y)
 
             # Second step: We grid search over the final estimator
-            print self.cv
             super(TSFGridSearchCV, self).__init__(final_estimator, final_estim_params, cv=self.cv)
             super(TSFGridSearchCV, self).fit(Xt, Yt)
 

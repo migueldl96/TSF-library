@@ -1,9 +1,9 @@
 # -*- coding: utf8 -*-
 
 import sys
-sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf')
-sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf/pipeline')
-sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf/grid_search')
+sys.path.append('/Users/x5981md/time-series-forecasting/tsf')
+sys.path.append('/Users/x5981md/time-series-forecasting/tsf/pipeline')
+sys.path.append('/Users/x5981md/time-series-forecasting/tsf/grid_search')
 from time_series_forescaster import SimpleAR, DinamicWindow, RangeWindow, ClassChange
 from tsf_pipeline import TSFPipeline
 from tsf_gridsearchcv import TSFGridSearchCV
@@ -52,15 +52,14 @@ def run_pipeline_test(files, ratio, test_r, n_jobs):
     train, test = split_train_test(data, test_r)
 
     # Create pipeline
-    pipe = TSFPipeline([('cc', ClassChange(umbralizer=umbralizer)),
-                        ('ar', SimpleAR(n_prev=4)),
-                        ('dw', DinamicWindow(ratio=ratio, stat=var_function, n_jobs=n_jobs)),
+    pipe = TSFPipeline([('ar', SimpleAR(n_prev=4, indexs=None)),
+                        ('dw', DinamicWindow(ratio=ratio, stat=var_function, n_jobs=n_jobs, indexs=None)),
                         ('regressor', LassoCV(random_state=0, n_jobs=n_jobs))])
 
     # Param grid
     params = [
         {
-            'ar__n_prev': [3, 4]
+            'ar__n_prev': [4, 3, 5, 6, 7]
         },
         {
             'dw__ratio': [0.2, 0.3]
@@ -82,8 +81,6 @@ def run_pipeline_test(files, ratio, test_r, n_jobs):
     # Predict using Pipeline
     predicted_train = gs.predict(train)
     predicted_test = gs.predict(test)
-
-    print gs.best_params_
 
     # MSE
     mse_train = mean_squared_error(pipe.offset_y(train, predicted_train), predicted_train)
