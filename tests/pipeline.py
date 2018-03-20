@@ -1,8 +1,8 @@
 # -*- coding: utf8 -*-
 
 import sys
-sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf')
-sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf/pipeline')
+sys.path.append('/Users/x5981md/time-series-forecasting/tsf')
+sys.path.append('/Users/x5981md/time-series-forecasting/tsf/pipeline')
 from time_series_forescaster import SimpleAR, DinamicWindow, RangeWindow, ClassChange
 from tsf_pipeline import TSFPipeline
 from sklearn.linear_model import LassoCV
@@ -49,7 +49,7 @@ def run_pipeline_test(files, ratio, test_r, n_jobs):
     train, test = split_train_test(data, test_r)
 
     # Create pipeline
-    pipe = TSFPipeline([('cc', ClassChange(umbralizer=umbralizer)),
+    pipe = TSFPipeline([('cc', ClassChange(umbralizer=umbralizer, n_jobs=n_jobs)),
                         ('ar', SimpleAR(n_prev=4)),
                         ('dw', DinamicWindow(ratio=ratio, stat=var_function, n_jobs=n_jobs)),
                         ('regressor', LassoCV(random_state=0, n_jobs=n_jobs))])

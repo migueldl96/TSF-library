@@ -65,27 +65,36 @@ def _range_window_delegate(serie, dev, metrics):
     return np.array(partial_X)
 
 
-def _classchange_window_delegate(umbralized, exogs, metrics):
-    partial_X = []
+def _classchange_periods_maker(endog):
 
     # Info from every output from all exogs series
-    for index, output in enumerate(umbralized):
+    periods_vector = []
+    for index, output in enumerate(endog):
         index = index + 1
-        output_info = []
         pivot = index - 1
-        previous = umbralized[pivot]
+        previous = endog[pivot]
 
         # Window size
-        while pivot > 0 and previous == umbralized[pivot - 1]:
+        while pivot > 0 and previous == endog[pivot - 1]:
             pivot = pivot - 1
+
         start = pivot
         end = index
 
-        # Info from exog series
-        for exog in exogs:
-            samples = exog[start:end]
-            for metric in metrics:
-                output_info.append(_get_samples_info(samples, metric))
+        periods_vector.append((start, end))
+
+    return periods_vector
+
+
+def _classchange_window_delegate(periods, exog, metrics):
+    partial_X = []
+    print exog
+    # Info from exog series
+    for period in periods:
+        output_info = []
+        samples = exog[period[0]:period[1]]
+        for metric in metrics:
+            output_info.append(_get_samples_info(samples, metric))
 
         partial_X.append(output_info)
 

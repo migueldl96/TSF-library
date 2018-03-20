@@ -1,8 +1,9 @@
 import numpy as np
-from tsf_tools import _fixed_window_delegate, _range_window_delegate, _dinamic_window_delegate, _classchange_window_delegate
+from tsf_tools import _fixed_window_delegate, _range_window_delegate, _dinamic_window_delegate, _classchange_window_delegate, _classchange_periods_maker
 from sklearn.externals.joblib import Parallel, delayed
 from sklearn.base import BaseEstimator, RegressorMixin, TransformerMixin
 from sklearn.linear_model import LassoCV
+import multiprocessing
 import time
 
 
@@ -227,11 +228,14 @@ class ClassChange(BaseEstimator, TransformerMixin):
                                 a 'y' 2D array with at least 2 rows.")
 
         # Umbralize endog
-        self.umbralized_serie = map(self.umbralizer, y[0])
+        self.umbralized_serie = np.array(map(self.umbralizer, y[0]))
 
         # Get exogs series info
-        partial_X = _classchange_window_delegate(self.umbralized_serie, y[1:], self._metrics)
-
+        periods_vector = _classchange_periods_maker(self.umbralized_serie)
+        partial_X = Parallel(n_jobs=self.n_jobs)(
+            delayed(_classchange_window_delegate)(periods_vector, exog, self._metrics) for exog in y[1:])
+        print np.array(partial_X)
+        quit()
         X = append_inputs(X, partial_X)
         return X
 
