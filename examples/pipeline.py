@@ -62,10 +62,10 @@ def run_pipeline_test(files, ratio, test_r, n_jobs):
             'ar__n_prev': [4, 3, 5, 6, 7]
         },
         {
-            'dw__ratio': [0.2, 0.3]
+            'dw__ratio': [0.3, 0.2]
         },
         {
-            'random_state': [0, 1, 2]
+            'random_state': [2, 0, 1]
         }
     ]
 

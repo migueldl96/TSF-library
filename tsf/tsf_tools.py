@@ -27,7 +27,7 @@ def _dinamic_window_delegate(serie, handler, metrics, ratio):
         pivot = index-2
         samples = serie[pivot:index]
 
-        while handler(samples) < limit and pivot - 1 >= 0:
+        while pivot - 1 >= 0 and handler(serie[pivot-1:index]) < limit:
             pivot = pivot - 1
             samples = serie[pivot:index]
 
