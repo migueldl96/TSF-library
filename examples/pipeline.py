@@ -1,9 +1,9 @@
 # -*- coding: utf8 -*-
 
 import sys
-sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf')
-sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf/pipeline')
-sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf/grid_search')
+sys.path.append('../tsf')
+sys.path.append('../tsf/pipeline')
+sys.path.append('../tsf/grid_search')
 from time_series_forescaster import SimpleAR, DinamicWindow, RangeWindow, ClassChange
 from tsf_pipeline import TSFPipeline
 from tsf_gridsearchcv import TSFGridSearchCV
@@ -62,8 +62,6 @@ def run_pipeline_test(files, ratio, test_r, n_jobs):
     # Create and fit TSFGridSearch
     gs = TSFGridSearchCV(pipe, params, cv=cv)
     gs.fit(X=[], y=data)
-
-    gs.predict(test)
 
     # Predict using Pipeline
     predicted_train = gs.predict(train)

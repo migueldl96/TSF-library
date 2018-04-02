@@ -49,7 +49,6 @@ def _dinamic_window_delegate(serie, handler, metrics, ratio):
             samples_info.append(_get_samples_info(samples, metric))
         partial_X.append(samples_info)
 
-    print np.array(partial_X)
     return np.array(partial_X)
 
 
