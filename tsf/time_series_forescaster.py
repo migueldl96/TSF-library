@@ -1,5 +1,5 @@
 import numpy as np
-from tsf_tools import _fixed_window_delegate, _range_window_delegate, _dinamic_window_delegate, _classchange_window_delegate
+from tsf_tools import _fixed_window_delegate, _range_window_delegate, _dinamic_window_delegate, _classchange_window_delegate, incremental_variance
 from sklearn.externals.joblib import Parallel, delayed
 from sklearn.base import BaseEstimator, RegressorMixin, TransformerMixin
 from sklearn.linear_model import LassoCV
@@ -175,12 +175,8 @@ class DinamicWindow(TSFBaseTransformer):
         return X
 
     def _get_stat_handler(self, y):
-        # Defined stat handlers
-        def variance(samples):
-            return np.var(samples)
-
         if self.stat == 'variance':
-            return variance
+            return incremental_variance
         else:
             raise ValueError("Invalid stat argument for dinamic window. Please use ['variance'] or own stat function.")
 

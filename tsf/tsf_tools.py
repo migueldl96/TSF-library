@@ -16,7 +16,10 @@ def _fixed_window_delegate(serie, n_prev):
 
 
 def _dinamic_window_delegate(serie, handler, metrics, ratio):
-    limit = handler(serie) * ratio
+    if handler.__name__ == "incremental_variance":
+        limit = np.var(serie) * ratio
+    else:
+        limit = handler(serie) * ratio
 
     partial_X = []
 
@@ -26,10 +29,19 @@ def _dinamic_window_delegate(serie, handler, metrics, ratio):
         # First two previous samples
         pivot = index-2
         samples = serie[pivot:index]
-
-        while pivot - 1 >= 0 and handler(serie[pivot-1:index]) < limit:
-            pivot = pivot - 1
-            samples = serie[pivot:index]
+        if handler.__name__ == "incremental_variance":
+            n = len(samples)
+            previous_var = np.var(samples)
+            previous_mean = np.mean(samples)
+            while pivot - 1 >= 0 and previous_var < limit:
+                n = n+1
+                pivot = pivot - 1
+                samples = serie[pivot:index]
+                previous_var, previous_mean = handler(n, previous_mean, previous_var, serie[pivot - 1])
+        else:
+            while pivot - 1 >= 0 and handler(serie[pivot-1:index]) < limit:
+                pivot = pivot - 1
+                samples = serie[pivot:index]
 
         # Once we have the samples, gather info about them
         samples_info = []
@@ -37,6 +49,7 @@ def _dinamic_window_delegate(serie, handler, metrics, ratio):
             samples_info.append(_get_samples_info(samples, metric))
         partial_X.append(samples_info)
 
+    print np.array(partial_X)
     return np.array(partial_X)
 
 
@@ -109,3 +122,18 @@ def _get_samples_info(samples, metric):
             'mean': np.mean(samples),
             'variance': np.var(samples)
         }.get(metric)
+
+
+# Incremental variance stat handler
+# Source: http://datagenetics.com/blog/november22017/index.html
+def incremental_variance(n_data, previous_mean, previous_var, new_value):
+    # We need mean
+    def incremental_mean(n, previous, new):
+        mean = previous + (new - previous) / float(n)
+        return mean
+
+    new_mean = incremental_mean(n_data, previous_mean, new_value)
+    previous_sn = previous_var * (n_data-1)
+    new_sn = previous_sn + (new_value - previous_mean) * (new_value - new_mean)
+
+    return new_sn/float(n_data), new_mean

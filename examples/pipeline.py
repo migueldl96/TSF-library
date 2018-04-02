@@ -1,9 +1,9 @@
 # -*- coding: utf8 -*-
 
 import sys
-sys.path.append('/Users/x5981md/time-series-forecasting/tsf')
-sys.path.append('/Users/x5981md/time-series-forecasting/tsf/pipeline')
-sys.path.append('/Users/x5981md/time-series-forecasting/tsf/grid_search')
+sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf')
+sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf/pipeline')
+sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf/grid_search')
 from time_series_forescaster import SimpleAR, DinamicWindow, RangeWindow, ClassChange
 from tsf_pipeline import TSFPipeline
 from tsf_gridsearchcv import TSFGridSearchCV
@@ -14,15 +14,6 @@ from sklearn.model_selection import KFold
 import click
 import numpy as np
 import pandas as pd
-
-
-# Some stat handlers examples
-def var_function(samples):
-    return np.var(samples)
-
-
-def mean_function(samples):
-    return np.mean(samples)
 
 
 # RVR umbralizer
@@ -52,15 +43,11 @@ def run_pipeline_test(files, ratio, test_r, n_jobs):
     train, test = split_train_test(data, test_r)
 
     # Create pipeline
-    pipe = TSFPipeline([('ar', SimpleAR(n_prev=4, indexs=None)),
-                        ('dw', DinamicWindow(ratio=ratio, stat=var_function, n_jobs=n_jobs, indexs=None)),
+    pipe = TSFPipeline([('dw', DinamicWindow(ratio=ratio, stat='variance', n_jobs=n_jobs, indexs=None)),
                         ('regressor', LassoCV(random_state=0, n_jobs=n_jobs))])
 
     # Param grid
     params = [
-        {
-            'ar__n_prev': [4, 3, 5, 6, 7]
-        },
         {
             'dw__ratio': [0.3, 0.2]
         },
@@ -92,6 +79,10 @@ def run_pipeline_test(files, ratio, test_r, n_jobs):
 
 def read_data(files):
     data = []
+
+    if not files:
+        raise ValueError("There is no data. Please use -f to select a file to read.")
+
     for file in files:
         path = '../data/' + file
         single_serie = pd.read_csv(path, header=None).values
@@ -107,6 +98,7 @@ def read_data(files):
 
 def split_train_test(data, test_ratio):
     train_ratio = 1-test_ratio
+
     if len(data.shape) == 1:
         train_samples = int(len(data) * train_ratio)
         return data[:train_samples], data[train_samples:]
