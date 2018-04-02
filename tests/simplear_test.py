@@ -4,7 +4,7 @@ import sys
 import unittest
 import numpy.testing as npt
 import numpy as np
-sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf')
+sys.path.append('../tsf')
 from time_series_forescaster import SimpleAR
 from tsf_tools import _fixed_window_delegate
 

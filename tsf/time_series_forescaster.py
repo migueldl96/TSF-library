@@ -1,7 +1,7 @@
 import numpy as np
 from tsf_tools import _fixed_window_delegate, _range_window_delegate, _dinamic_window_delegate, _classchange_window_delegate, incremental_variance
 from sklearn.externals.joblib import Parallel, delayed
-from sklearn.base import BaseEstimator, RegressorMixin, TransformerMixin
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.linear_model import LassoCV
 
 
@@ -32,7 +32,8 @@ class TSFBaseTransformer(BaseEstimator, TransformerMixin):
                 try:
                     self.series.append(y[index])
                 except IndexError:
-                    raise Warning("'%d' index out of 'y' range. Max: '%d'. Ignoring this index..." % (index, y.shape[0]-1))
+                    raise Warning("'%d' index out of 'y' range. Max: '%d'. Ignoring this index..."
+                                  % (index, y.shape[0]-1))
         else:
             self.series = y
 
@@ -210,7 +211,8 @@ class RangeWindow(TSFBaseTransformer):
 
         # Build database for every output
         partial_X = Parallel(n_jobs=self.n_jobs)(
-            delayed(_range_window_delegate)(serie, self._dev[index], self._metrics) for index, serie in enumerate(self.series))
+            delayed(_range_window_delegate)(serie, self._dev[index], self._metrics) for index, serie
+            in enumerate(self.series))
 
         X = self.append_inputs(X, partial_X)
 

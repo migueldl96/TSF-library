@@ -4,9 +4,9 @@ import sys
 import unittest
 import numpy.testing as npt
 import numpy as np
-sys.path.append('/Users/migueldiazlozano/Desktop/Ingeniería Informática/TFG/TSF/tsf')
+sys.path.append('../tsf')
 from time_series_forescaster import DinamicWindow
-from tsf_tools import _dinamic_window_delegate
+from tsf_tools import _dinamic_window_delegate, incremental_variance
 
 
 def var(samples):
@@ -35,7 +35,7 @@ class TestDinamicWindow(unittest.TestCase):
                     [7, 0.6666667],
                     [8, 0.6666667]]
 
-        result = _dinamic_window_delegate(self.data[0], var, metrics=self.metrics[0:2], ratio=ratio)
+        result = _dinamic_window_delegate(self.data[0], incremental_variance, metrics=self.metrics[0:2], ratio=ratio)
 
         # Test data
         npt.assert_allclose(result, expected)
@@ -52,7 +52,7 @@ class TestDinamicWindow(unittest.TestCase):
                     [7, 0.6666667, 17, 0.6666667, 27, 0.6666667],
                     [8, 0.6666667, 18, 0.6666667, 28, 0.6666667]]
 
-        dw = DinamicWindow(ratio=ratio, stat=var)
+        dw = DinamicWindow(ratio=ratio, stat='variance')
         Xt = dw.transform(X=[], y=self.data)
 
         # Test data
@@ -62,7 +62,7 @@ class TestDinamicWindow(unittest.TestCase):
         ratio = 0.1
         for index in range(1, len(self.metrics)):
             metrics = self.metrics[0:index]
-            dw = DinamicWindow(ratio=ratio, stat=var, metrics=metrics)
+            dw = DinamicWindow(ratio=ratio, stat='variance', metrics=metrics)
             Xt = dw.transform(X=[], y=self.data)
 
             # Test shape
