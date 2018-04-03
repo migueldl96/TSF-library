@@ -1,4 +1,5 @@
 import numpy as np
+import warnings
 from tsf_tools import _fixed_window_delegate, _range_window_delegate, _dinamic_window_delegate, _classchange_window_delegate, incremental_variance
 from sklearn.externals.joblib import Parallel, delayed
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -6,8 +7,12 @@ from sklearn.linear_model import LassoCV
 
 
 class TSFBaseTransformer(BaseEstimator, TransformerMixin):
-    def __init__(self, indexs=None, n_jobs=-1, metrics=None):
+
+    horizon = None
+
+    def __init__(self, indexs=None, n_jobs=-1, metrics=None, horizon=None):
         self.n_jobs = n_jobs
+        self.set_horizon(horizon)
 
         # Involved serie indexs
         if indexs is not None and not hasattr(indexs, "__iter__"):
@@ -32,10 +37,20 @@ class TSFBaseTransformer(BaseEstimator, TransformerMixin):
                 try:
                     self.series.append(y[index])
                 except IndexError:
-                    raise Warning("'%d' index out of 'y' range. Max: '%d'. Ignoring this index..."
+                    warnings.warn("'%d' index out of 'y' range. Max: '%d'. Ignoring this index..."
                                   % (index, y.shape[0]-1))
         else:
             self.series = y
+
+    def set_horizon(self, new_horizon):
+        if new_horizon is not None:
+            if TSFBaseTransformer.horizon is None:
+                TSFBaseTransformer.horizon = new_horizon
+
+            if TSFBaseTransformer.horizon is not None and TSFBaseTransformer.horizon != new_horizon:
+                warnings.warn("Different horizon values in TSF Transformers. Swapping from '%d' to '%d'" %
+                              (TSFBaseTransformer.horizon, new_horizon), Warning)
+                TSFBaseTransformer.horizon = new_horizon
 
     def check_consistent_y(self, y):
         # Y must be the time serie!
@@ -99,9 +114,9 @@ class TSFBaseTransformer(BaseEstimator, TransformerMixin):
 
 
 class SimpleAR(TSFBaseTransformer):
-    def __init__(self, n_prev=5, n_jobs=-1, indexs=None):
+    def __init__(self, n_prev=5, n_jobs=-1, indexs=None, horizon=None):
         # Init superclass
-        super(SimpleAR, self).__init__(indexs, n_jobs)
+        super(SimpleAR, self).__init__(indexs=indexs, n_jobs=n_jobs, horizon=horizon)
 
         self.n_prev = n_prev
 
@@ -121,7 +136,8 @@ class SimpleAR(TSFBaseTransformer):
 
         # Build database for every output
         partial_X = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fixed_window_delegate)(serie, n_prev=self.n_prev) for serie in self.series)
+            delayed(_fixed_window_delegate)(serie, n_prev=self.n_prev, horizon=TSFBaseTransformer.horizon)
+            for serie in self.series)
 
         # We already have the data, lets append it to our inputs matrix
         X = self.append_inputs(X, partial_X)
@@ -130,9 +146,9 @@ class SimpleAR(TSFBaseTransformer):
 
 
 class DinamicWindow(TSFBaseTransformer):
-    def __init__(self, stat='variance', ratio=0.1, metrics=None, n_jobs=-1, indexs=None):
+    def __init__(self, stat='variance', ratio=0.1, metrics=None, n_jobs=-1, indexs=None, horizon=None):
         # Init superclass
-        super(DinamicWindow, self).__init__(indexs, n_jobs, metrics)
+        super(DinamicWindow, self).__init__(indexs=indexs, n_jobs=n_jobs, metrics=metrics, horizon=horizon)
 
         self.stat = stat
         self.ratio = ratio
@@ -167,8 +183,8 @@ class DinamicWindow(TSFBaseTransformer):
 
         # Build database for every output
         partial_X = Parallel(n_jobs=self.n_jobs)(
-            delayed(_dinamic_window_delegate)(serie, handler=self._handler, metrics=self._metrics, ratio=self.ratio)
-            for serie in self.series)
+            delayed(_dinamic_window_delegate)(serie, handler=self._handler, metrics=self._metrics, ratio=self.ratio,
+                                              horizon=TSFBaseTransformer.horizon) for serie in self.series)
 
         # We already have the data, lets append it to our inputs matrix
         X = self.append_inputs(X, partial_X)
@@ -183,9 +199,9 @@ class DinamicWindow(TSFBaseTransformer):
 
 
 class RangeWindow(TSFBaseTransformer):
-    def __init__(self, metrics=None, n_jobs=-1, indexs=None):
+    def __init__(self, metrics=None, n_jobs=-1, indexs=None, horizon=None):
         # Init superclass
-        super(RangeWindow, self).__init__(indexs, n_jobs, metrics)
+        super(RangeWindow, self).__init__(indexs=indexs, n_jobs=n_jobs, metrics=metrics, horizon=horizon)
 
         # Fit attributes
         self._dev = None
@@ -211,7 +227,8 @@ class RangeWindow(TSFBaseTransformer):
 
         # Build database for every output
         partial_X = Parallel(n_jobs=self.n_jobs)(
-            delayed(_range_window_delegate)(serie, self._dev[index], self._metrics) for index, serie
+            delayed(_range_window_delegate)(serie, self._dev[index], self._metrics, horizon=TSFBaseTransformer.horizon)
+            for index, serie
             in enumerate(self.series))
 
         X = self.append_inputs(X, partial_X)
@@ -223,15 +240,18 @@ class RangeWindow(TSFBaseTransformer):
 
 
 class ClassChange(TSFBaseTransformer):
-    def __init__(self, umbralizer, metrics=None, n_jobs=-1, indexs=None):
+    def __init__(self, umbralizer=None, metrics=None, n_jobs=-1, indexs=None, horizon=1):
         # Init superclass
-        super(ClassChange, self).__init__(indexs, n_jobs, metrics)
+        super(ClassChange, self).__init__(indexs=indexs, n_jobs=n_jobs, metrics=metrics, horizon=horizon)
 
         self.umbralizer = umbralizer
         self.umbralized_serie = None
 
     def fit(self, X, y=None):
-        self.umbralized_serie = map(self.umbralizer, y[0])
+        if self.umbralizer is not None:
+            self.umbralized_serie = map(self.umbralizer, y[0])
+        else:
+            self.umbralized_serie = y[0]
 
     def transform(self, X, y=None):
         # We need al least one exog serie
@@ -255,10 +275,14 @@ class ClassChange(TSFBaseTransformer):
                                 a 'y' 2D array with at least 2 rows.")
 
         # Umbralize endog
-        self.umbralized_serie = map(self.umbralizer, y[0])
+        if self.umbralizer is not None:
+            self.umbralized_serie = map(self.umbralizer, y[0])
+        else:
+            self.umbralized_serie = y[0]
 
         # Get exogs series info
-        partial_X = _classchange_window_delegate(self.umbralized_serie, self.series[1:], self._metrics)
+        partial_X = _classchange_window_delegate(self.umbralized_serie, self.series[1:], self._metrics,
+                                                 TSFBaseTransformer.horizon)
 
         X = self.append_inputs(X, partial_X)
         return X

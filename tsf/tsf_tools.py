@@ -1,12 +1,12 @@
 import numpy as np
 
 
-def _fixed_window_delegate(serie, n_prev):
+def _fixed_window_delegate(serie, n_prev, horizon):
     partial_X = []
     begin = 0
     end = n_prev
 
-    while end < len(serie):
+    while end <= len(serie) - horizon:
         n_samples = serie[begin:end]
         partial_X.append(n_samples)
         begin = begin + 1
@@ -15,19 +15,18 @@ def _fixed_window_delegate(serie, n_prev):
     return np.array(partial_X)
 
 
-def _dinamic_window_delegate(serie, handler, metrics, ratio):
+def _dinamic_window_delegate(serie, handler, metrics, ratio, horizon):
     if handler.__name__ == "incremental_variance":
         limit = np.var(serie) * ratio
     else:
         limit = handler(serie) * ratio
-
     partial_X = []
 
-    for index, output in enumerate(serie[2:]):
-        index = index + 2
+    for index, output in enumerate(serie[horizon:]):
+        index = index + 1
 
-        # First two previous samples
-        pivot = index-2
+        # First previous samples
+        pivot = index - 1
         samples = serie[pivot:index]
         if handler.__name__ == "incremental_variance":
             n = len(samples)
@@ -35,9 +34,10 @@ def _dinamic_window_delegate(serie, handler, metrics, ratio):
             previous_mean = np.mean(samples)
             while pivot - 1 >= 0 and previous_var < limit:
                 n = n+1
-                pivot = pivot - 1
-                samples = serie[pivot:index]
                 previous_var, previous_mean = handler(n, previous_mean, previous_var, serie[pivot - 1])
+                if previous_var < limit:
+                    pivot = pivot - 1
+                    samples = serie[pivot:index]
         else:
             while pivot - 1 >= 0 and handler(serie[pivot-1:index]) < limit:
                 pivot = pivot - 1
@@ -77,11 +77,11 @@ def _range_window_delegate(serie, dev, metrics):
     return np.array(partial_X)
 
 
-def _classchange_window_delegate(umbralized, exogs, metrics):
+def _classchange_window_delegate(umbralized, exogs, metrics, horizon):
     partial_X = []
 
     # Info from every output from all exogs series
-    for index, output in enumerate(umbralized):
+    for index, output in enumerate(umbralized[horizon:]):
         index = index + 1
         output_info = []
         pivot = index - 1
