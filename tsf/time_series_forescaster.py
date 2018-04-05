@@ -256,8 +256,8 @@ class ClassChange(TSFBaseTransformer):
     def transform(self, X, y=None):
         # We need al least one exog serie
         if len(y.shape) == 1 or y.shape[0] < 2:
-            raise ValueError("ClassChange need tor receive one exogenous serie at least. Please \
-                             an 'y' 2D array with at least 2 rows.")
+            raise ValueError("ClassChange need tor receive one exogenous serie at least. Please"
+                             "an 'y' 2D array with at least 2 rows.")
         Xt = self.fit_transform(X, y)
 
         return Xt
@@ -271,8 +271,8 @@ class ClassChange(TSFBaseTransformer):
 
         # We need al least one exog serie
         if len(y.shape) == 1 or y.shape[0] < 2:
-            raise ValueError("ClassChange need to receive one exogenous serie at least. Please use\
-                                a 'y' 2D array with at least 2 rows.")
+            raise ValueError("ClassChange need to receive one exogenous serie at least. Please use"
+                             "an 'y' 2D array with at least 2 rows.")
 
         # Umbralize endog
         if self.umbralizer is not None:
