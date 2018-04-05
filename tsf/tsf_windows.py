@@ -8,6 +8,7 @@ from sklearn.linear_model import LassoCV
 
 class TSFBaseTransformer(BaseEstimator, TransformerMixin):
 
+    # Static horizon for all transformers
     horizon = None
 
     def __init__(self, indexs=None, n_jobs=-1, metrics=None, horizon=None):
@@ -256,7 +257,7 @@ class ClassChange(TSFBaseTransformer):
     def transform(self, X, y=None):
         # We need al least one exog serie
         if len(y.shape) == 1 or y.shape[0] < 2:
-            raise ValueError("ClassChange need tor receive one exogenous serie at least. Please"
+            raise ValueError("ClassChange need tor receive one exogenous serie at least. Please use"
                              "an 'y' 2D array with at least 2 rows.")
         Xt = self.fit_transform(X, y)
 

@@ -6,10 +6,11 @@ sys.path.append('../tsf/pipeline')
 sys.path.append('../tsf/grid_search')
 reload(sys)
 sys.setdefaultencoding('utf-8')
-from time_series_forescaster import SimpleAR, DinamicWindow, RangeWindow, ClassChange, TSFBaseTransformer
+from tsf_windows import SimpleAR, DinamicWindow, RangeWindow, ClassChange, TSFBaseTransformer
 from tsf_pipeline import TSFPipeline
 from tsf_gridsearchcv import TSFGridSearchCV
 from sklearn.linear_model import LassoCV
+from sklearn.neural_network import MLPRegressor
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import KFold
 
@@ -75,7 +76,7 @@ def create_pipe(pipe_steps):
         steps.append(("dw", DinamicWindow()))
     if pipe_steps['ar']:
         steps.append(("ar", SimpleAR()))
-    steps.append(("model", LassoCV()))
+    steps.append(("model", pipe_steps['model']))
     return TSFPipeline(steps)
 
 
@@ -94,11 +95,15 @@ def get_params(pipe_steps, tsf_config):
 
 @ex.config
 def configuration():
+    seed = 0
+    test_ratio = 0.3
+    files = ["temp.txt"]
+
     pipe_steps = {
         'ar': True,
         'dw': True,
         'cc': True,
-        'model': LassoCV()
+        'model': MLPRegressor()
     }
     tsf_config = {
         'n_jobs': -1,
@@ -113,20 +118,14 @@ def configuration():
         }
     }
 
-    pipe = create_pipe(pipe_steps)
-    params = get_params(pipe_steps, tsf_config)
-
-    test_ratio = 0.3
-    files = ["temp.txt"]
-    seed = 0
-
 
 @ex.named_config
 def rvr():
     files = ["RVR.txt", "temp.txt", "humidity.txt", "windDir.txt", "windSpeed.txt", "QNH.txt"]
 
+
 @ex.automain
-def main(files, test_ratio, pipe, params, seed):
+def main(files, test_ratio, pipe_steps, tsf_config, seed):
 
     # Read the data
     data = read_data(files)
@@ -134,14 +133,15 @@ def main(files, test_ratio, pipe, params, seed):
     # Set the seed
     random.seed(seed)
 
+    # Create pipe and set the config
+    pipe = create_pipe(pipe_steps)
+    params = get_params(pipe_steps, tsf_config)
+
     # Split
     train, test = split_train_test(data, test_ratio)
 
-    # Cross validation GridSearch
-    cv = KFold(n_splits=3, random_state=seed)
-
     # Create and fit TSFGridSearch
-    gs = TSFGridSearchCV(pipe, params, cv=cv)
+    gs = TSFGridSearchCV(pipe, params)
     gs.fit(X=[], y=train)
     print "Best params: " + str(gs.best_params_)
 

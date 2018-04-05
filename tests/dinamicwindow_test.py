@@ -5,7 +5,7 @@ import unittest
 import numpy.testing as npt
 import numpy as np
 sys.path.append('../tsf')
-from time_series_forescaster import DinamicWindow
+from tsf_windows import DinamicWindow
 from tsf_tools import _dinamic_window_delegate, incremental_variance
 
 
