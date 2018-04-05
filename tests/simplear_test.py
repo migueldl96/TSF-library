@@ -7,6 +7,7 @@ import numpy as np
 sys.path.append('../tsf')
 from tsf_windows import SimpleAR
 from tsf_tools import _fixed_window_delegate
+from random import randint
 
 
 class TestSimpleAR(unittest.TestCase):
@@ -23,28 +24,14 @@ class TestSimpleAR(unittest.TestCase):
                   [6, 7],
                   [7, 8],
                   [8, 9]]
-        result = _fixed_window_delegate(self.data[0], 2)
-
-        # Test shape
-        self.assertEquals(result.shape[0], 8)
-        self.assertEquals(result.shape[1], 2)
+        result = _fixed_window_delegate(self.data[0], 2, horizon=1)
 
         # Test data
         npt.assert_allclose(result, expected)
 
-    def test_multi_transform(self):
-        n_prevs = [1, 2, 3, 4, 5, 6, 7, 8]
-
-        # Test shape
-        for n_prev in n_prevs:
-            sar = SimpleAR(n_prev)
-            Xt = sar.transform(X=[], y=self.data)
-
-            self.assertEquals(Xt.shape[1], n_prev * self.data.shape[0])
-            self.assertEquals(Xt.shape[0], self.data.shape[1] - n_prev)
-
+    def test_multi_maker(self):
         # Test data for n_prev = 2
-        sar = SimpleAR(2)
+        sar = SimpleAR(2, horizon=1)
         expected = [[1, 2, 11, 12, 21, 22],
                   [2, 3, 12, 13, 22, 23],
                   [3, 4, 13, 14, 23, 24],
@@ -56,6 +43,25 @@ class TestSimpleAR(unittest.TestCase):
         Xt = sar.transform(X=[], y=self.data)
 
         npt.assert_allclose(Xt, expected)
+
+    def test_shape(self):
+        n_prevs = [1, 2, 3, 4, 5, 6, 7, 8]
+
+        # Test shape
+        for _ in range(1, 50):
+            # Completely random problem
+            horizon = randint(1, 30)
+            n_prev = randint(1, 50)
+            series_number = randint(1, 100)
+            series_length = randint(100, 500)
+            random_data = np.random.rand(series_number, series_length)
+
+            sar = SimpleAR(n_prev, horizon=horizon)
+
+            Xt = sar.transform(X=[], y=random_data)
+
+            self.assertEquals(Xt.shape[1], n_prev * random_data.shape[0])
+            self.assertEquals(Xt.shape[0], random_data.shape[1] - n_prev - (horizon-1))
 
 
 if __name__ == '__main__':

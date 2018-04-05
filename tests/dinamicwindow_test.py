@@ -4,6 +4,7 @@ import sys
 import unittest
 import numpy.testing as npt
 import numpy as np
+from random import randint
 sys.path.append('../tsf')
 from tsf_windows import DinamicWindow
 from tsf_tools import _dinamic_window_delegate, incremental_variance
@@ -26,7 +27,8 @@ class TestDinamicWindow(unittest.TestCase):
     # White
     def test_single_maker(self):
         ratio = 0.1
-        expected = [[1.5, 0.25],
+        expected = [[1, 0],
+                    [1.5, 0.25],
                     [2, 0.6666667],
                     [3, 0.6666667],
                     [4, 0.6666667],
@@ -35,7 +37,8 @@ class TestDinamicWindow(unittest.TestCase):
                     [7, 0.6666667],
                     [8, 0.6666667]]
 
-        result = _dinamic_window_delegate(self.data[0], incremental_variance, metrics=self.metrics[0:2], ratio=ratio)
+        result = _dinamic_window_delegate(self.data[0], incremental_variance, metrics=self.metrics[0:2], ratio=ratio,
+                                          horizon=1)
 
         # Test data
         npt.assert_allclose(result, expected)
@@ -43,14 +46,16 @@ class TestDinamicWindow(unittest.TestCase):
     def test_multi_maker(self):
 
         ratio = 0.1
-        expected = [[1.5, 0.25, 11.5, 0.25, 21.5, 0.25],
+        expected = [[1, 0, 11, 0, 21, 0],
+                    [1.5, 0.25, 11.5, 0.25, 21.5, 0.25],
                     [2, 0.6666667, 12, 0.6666667, 22, 0.6666667],
                     [3, 0.6666667, 13, 0.6666667, 23, 0.6666667],
                     [4, 0.6666667, 14, 0.6666667, 24, 0.6666667],
                     [5, 0.6666667, 15, 0.6666667, 25, 0.6666667],
                     [6, 0.6666667, 16, 0.6666667, 26, 0.6666667],
                     [7, 0.6666667, 17, 0.6666667, 27, 0.6666667],
-                    [8, 0.6666667, 18, 0.6666667, 28, 0.6666667]]
+                    [8, 0.6666667, 18, 0.6666667, 28, 0.6666667],
+                    [9, 0.6666667, 19, 0.6666667, 29, 0.6666667]]
 
         dw = DinamicWindow(ratio=ratio, stat='variance')
         Xt = dw.transform(X=[], y=self.data)
@@ -60,14 +65,23 @@ class TestDinamicWindow(unittest.TestCase):
 
     def test_shape(self):
         ratio = 0.1
-        for index in range(1, len(self.metrics)):
-            metrics = self.metrics[0:index]
-            dw = DinamicWindow(ratio=ratio, stat='variance', metrics=metrics)
-            Xt = dw.transform(X=[], y=self.data)
+        for _ in range(1, 50):
+            # Completely random problem
+            horizon = randint(1, 30)
+            series_number = randint(1, 100)
+            series_length = randint(100, 500)
+
+            metrics_number = randint(1, len(self.metrics))
+            random_data = np.random.rand(series_number, series_length)
+
+            metrics = self.metrics[0:metrics_number]
+
+            dw = DinamicWindow(ratio=ratio, stat='variance', metrics=metrics, horizon=horizon)
+            Xt = dw.transform(X=[], y=random_data)
 
             # Test shape
-            self.assertEquals(Xt.shape[0], self.data.shape[1] - 2)
-            self.assertEquals(Xt.shape[1], self.data.shape[0] * len(metrics))
+            self.assertEquals(Xt.shape[0], random_data.shape[1] - horizon)
+            self.assertEquals(Xt.shape[1], random_data.shape[0] * metrics_number)
 
 
 if __name__ == "__main__":
