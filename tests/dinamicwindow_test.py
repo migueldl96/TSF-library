@@ -54,18 +54,38 @@ class TestDinamicWindow(unittest.TestCase):
                     [5, 0.6666667, 15, 0.6666667, 25, 0.6666667],
                     [6, 0.6666667, 16, 0.6666667, 26, 0.6666667],
                     [7, 0.6666667, 17, 0.6666667, 27, 0.6666667],
-                    [8, 0.6666667, 18, 0.6666667, 28, 0.6666667],
-                    [9, 0.6666667, 19, 0.6666667, 29, 0.6666667]]
+                    [8, 0.6666667, 18, 0.6666667, 28, 0.6666667]]
 
-        dw = DinamicWindow(ratio=ratio, stat='variance')
+        dw = DinamicWindow(ratio=ratio, stat='variance', horizon=1)
         Xt = dw.transform(X=[], y=self.data)
 
         # Test data
         npt.assert_allclose(Xt, expected)
 
+    def test_incremental_variance(self):
+        ratio = 0.1
+        for _ in range(1, 10):
+            # Completely random problem
+            horizon = randint(1, 30)
+            series_number = randint(1, 100)
+            series_length = randint(100, 500)
+
+            metrics_number = randint(1, len(self.metrics))
+            random_data = np.random.rand(series_number, series_length)
+
+            metrics = self.metrics[0:metrics_number]
+
+            dw = DinamicWindow(ratio=ratio, stat=var, metrics=metrics, horizon=horizon)
+            var_function_result = dw.transform(X=[], y=random_data)
+            dw = DinamicWindow(ratio=ratio, stat='variance', metrics=metrics, horizon=horizon)
+            incremental_variance_result = dw.transform(X=[], y=random_data)
+
+            # Test
+            npt.assert_allclose(var_function_result, incremental_variance_result)
+
     def test_shape(self):
         ratio = 0.1
-        for _ in range(1, 50):
+        for _ in range(1, 10):
             # Completely random problem
             horizon = randint(1, 30)
             series_number = randint(1, 100)

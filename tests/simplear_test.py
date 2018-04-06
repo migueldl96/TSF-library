@@ -45,7 +45,6 @@ class TestSimpleAR(unittest.TestCase):
         npt.assert_allclose(Xt, expected)
 
     def test_shape(self):
-        n_prevs = [1, 2, 3, 4, 5, 6, 7, 8]
 
         # Test shape
         for _ in range(1, 50):
