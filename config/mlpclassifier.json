@@ -1,28 +1,32 @@
 {
   "seed": 0,
   "test_ratio": 0.3,
-  "files": ["temp.txt"],
+  "files": ["RVR.txt", "humidity.txt", "windDir.txt", "windSpeed.txt", "QNH.txt", "temp.txt"],
 
   "pipe_steps": {
     "ar": true,
     "dw": true,
-    "cc": false
+    "cc": true
   },
 
   "tsf_config": {
     "n_jobs": -1,
     "horizon": 1,
     "ar": {
-      "ar__n_prev": [1, 2, 3]
+      "ar__n_prev": [2, 3, 4]
     },
     "dw": {
-      "dw__ratio": [0.1, 0.2]
+      "dw__ratio": [0.1, 0.2],
+      "dw__indexs": [[1, 2, 3, 4, 5]]
+    },
+    "cc": {
+
     }
   },
 
   "model_config": {
-        "type": "regression",
-        "estimator": 1,
+        "type": "classification",
+        "estimator": 2,
         "params": {
           "hidden_layer_sizes": [50, 60, 70, 80, 90, 100, 110]
         }

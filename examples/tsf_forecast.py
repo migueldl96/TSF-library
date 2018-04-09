@@ -10,9 +10,10 @@ from tsf_windows import SimpleAR, DinamicWindow, RangeWindow, ClassChange, TSFBa
 from tsf_pipeline import TSFPipeline
 from tsf_gridsearchcv import TSFGridSearchCV
 from sklearn.linear_model import LassoCV
-from sklearn.neural_network import MLPRegressor
+from sklearn.neural_network import MLPRegressor, MLPClassifier
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import KFold
+from sklearn.metrics import accuracy_score
 
 import random
 import numpy as np
@@ -68,7 +69,16 @@ def split_train_test(data, test_ratio):
         return data[:, :train_samples], data[:, train_samples:]
 
 
-def create_pipe(pipe_steps):
+def get_estimator(estimator):
+    if estimator == 0:
+        return LassoCV()
+    if estimator == 1:
+        return MLPRegressor()
+    if estimator == 2:
+        return MLPClassifier()
+
+
+def create_pipe(pipe_steps, estimator):
     steps = []
     if pipe_steps['cc']:
         steps.append(("cc", ClassChange()))
@@ -76,19 +86,22 @@ def create_pipe(pipe_steps):
         steps.append(("dw", DinamicWindow()))
     if pipe_steps['ar']:
         steps.append(("ar", SimpleAR()))
-    steps.append(("model", pipe_steps['model']))
+    if pipe_steps['model']:
+        steps.append(("model", get_estimator(estimator)))
     return TSFPipeline(steps)
 
 
-def get_params(pipe_steps, tsf_config):
+def get_params(pipe_steps, tsf_config, model_config):
     params = []
     TSFBaseTransformer.horizon = tsf_config['horizon']
     if pipe_steps['ar']:
         params.append(tsf_config['ar'])
     if pipe_steps['dw']:
         params.append(tsf_config['dw'])
-    if 'model' in pipe_steps.keys():
-        params.append(tsf_config['model'])
+    if pipe_steps['cc']:
+        params.append(tsf_config['cc'])
+    if pipe_steps['model']:
+        params.append(model_config['params'])
 
     return params
 
@@ -96,25 +109,47 @@ def get_params(pipe_steps, tsf_config):
 @ex.config
 def configuration():
     seed = 0
+
+    # ratio of samples for testing
     test_ratio = 0.3
+
+    # files where time series are located
     files = ["temp.txt"]
 
+    # steps of the model
     pipe_steps = {
-        'ar': True,
-        'dw': True,
-        'cc': True,
-        'model': MLPRegressor()
+        'ar': True,     # Standard autorregresive model using fixed window
+        'dw': True,     # Dinamic Window based on stat limit
+        'cc': False,    # Dinamic Window based on class change (classification oriented)
+        'model': True   # Final estimator used for forecasting
     }
+
+    # parameters of the windows model
     tsf_config = {
-        'n_jobs': -1,
-        'horizon': 1,
-        'ar': {
-            'ar__n_prev': [1, 2]
+        'n_jobs': -1,   # Number of parallel process
+        'horizon': 1,   # Forecast distance
+        'ar': {         # Standar autorregresive parameters
+            'ar__n_prev': [1, 2]                        # Number of previous samples to use
         },
-        'dw': {
-            'dw__ratio': [0.1]
+        'dw': {         # Dinamic Window based on stat limit parameters
+            'dw__stat': ['variance'],                   # Stat to calculate window size
+            'dw__metrics': [['mean', 'variance']],      # Stats to resume information of window
+            'dw__ratio': [0.1],                         # Stat ratio to limit window size
+            'dw__indexs': [None]                        # Indexs of series to be used
         },
-        'model': {
+        'cc': {         # Dinamic window based on class change parameters
+            'cc__metrics': [['mean', 'variance']],      # Stats to resume information of window
+            'cc__indexs': [None],                       # Indexs of series to be used
+            'cc__umbralizer': [None]
+        },
+    }
+
+    # parameters of the estimator model
+    model_config = {
+        'type': 'regression',
+        'estimator': 0,
+        'params': {
+
         }
     }
 
@@ -125,7 +160,7 @@ def rvr():
 
 
 @ex.automain
-def main(files, test_ratio, pipe_steps, tsf_config, seed):
+def main(files, test_ratio, pipe_steps, tsf_config, model_config, seed):
 
     # Read the data
     data = read_data(files)
@@ -133,9 +168,13 @@ def main(files, test_ratio, pipe_steps, tsf_config, seed):
     # Set the seed
     random.seed(seed)
 
+    # Umbralizer
+    if model_config['type'] == "classification":
+        data[0] = map(umbralizer, data[0])
+
     # Create pipe and set the config
-    pipe = create_pipe(pipe_steps)
-    params = get_params(pipe_steps, tsf_config)
+    pipe = create_pipe(pipe_steps, model_config['estimator'])
+    params = get_params(pipe_steps, tsf_config, model_config)
 
     # Split
     train, test = split_train_test(data, test_ratio)
@@ -153,5 +192,11 @@ def main(files, test_ratio, pipe_steps, tsf_config, seed):
     mse_train = mean_squared_error(pipe.offset_y(train, predicted_train), predicted_train)
     mse_test = mean_squared_error(pipe.offset_y(test, predicted_test), predicted_test)
 
-    print "MSE train: " + str(mse_train)
-    print "MSE test: " + str(mse_test)
+    if model_config['type'] == 'regression':
+        print "MSE train: " + str(mse_train)
+        print "MSE test: " + str(mse_test)
+    elif model_config['type'] == 'classification':
+        ccr_train = accuracy_score(pipe.offset_y(train, predicted_train), predicted_train)
+        ccr_test = accuracy_score(pipe.offset_y(test, predicted_test), predicted_test)
+        print "CCR train: " + str(ccr_train)
+        print "CCR test: " + str(ccr_test)

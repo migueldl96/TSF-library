@@ -23,11 +23,11 @@ class TSFBaseTransformer(BaseEstimator, TransformerMixin):
 
         # Metrics
         if metrics is None:
-            self._metrics = ['mean', 'variance']
+            self.metrics = ['mean', 'variance']
         else:
             if not hasattr(metrics, "__iter__"):
                 raise ValueError("'metrics' param should be iterable.")
-            self._metrics = metrics
+            self.metrics = metrics
 
     def set_involved_series(self, y):
         y = self.check_consistent_y(y)
@@ -184,7 +184,7 @@ class DinamicWindow(TSFBaseTransformer):
 
         # Build database for every output
         partial_X = Parallel(n_jobs=self.n_jobs)(
-            delayed(_dinamic_window_delegate)(serie, handler=self._handler, metrics=self._metrics, ratio=self.ratio,
+            delayed(_dinamic_window_delegate)(serie, handler=self._handler, metrics=self.metrics, ratio=self.ratio,
                                               horizon=TSFBaseTransformer.horizon) for serie in self.series)
 
         # We already have the data, lets append it to our inputs matrix
@@ -282,7 +282,7 @@ class ClassChange(TSFBaseTransformer):
             self.umbralized_serie = y[0]
 
         # Get exogs series info
-        partial_X = _classchange_window_delegate(self.umbralized_serie, self.series[1:], self._metrics,
+        partial_X = _classchange_window_delegate(self.umbralized_serie, self.series[1:], self.metrics,
                                                  TSFBaseTransformer.horizon)
 
         X = self.append_inputs(X, partial_X)
