@@ -1,5 +1,5 @@
 import numpy as np
-
+import warnings
 
 def _fixed_window_delegate(serie, n_prev, horizon):
     partial_X = []
@@ -16,10 +16,15 @@ def _fixed_window_delegate(serie, n_prev, horizon):
 
 
 def _dinamic_window_delegate(serie, handler, metrics, ratio, horizon):
+    if ratio >= 1:
+        warnings.warn("DinamicWindow: Ratio param is too big (%d). Consider using a ratio <1" %
+                      ratio, Warning)
+
     if handler.__name__ == "incremental_variance":
         limit = np.var(serie) * ratio
     else:
         limit = handler(serie) * ratio
+
     partial_X = []
 
     for index, output in enumerate(serie[horizon:]):
