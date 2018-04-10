@@ -8,5 +8,5 @@ setup(name='tsf',
       author_email='migueldialoz@gmail.com',
       license='Universidad de Cordoba',
       packages=['tsf'],
-      install_requires=['sklearn'],
+      install_requires=['sklearn', 'numpy'],
       zip_safe=False)
