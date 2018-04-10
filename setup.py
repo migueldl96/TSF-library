@@ -8,4 +8,5 @@ setup(name='tsf',
       author_email='migueldialoz@gmail.com',
       license='Universidad de Cordoba',
       packages=['tsf'],
+      install_requires=['sklearn'],
       zip_safe=False)
