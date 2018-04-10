@@ -1,10 +1,10 @@
 from sklearn.model_selection import GridSearchCV
-from tsf_pipeline import TSFPipeline
+from ..pipeline import TSFPipeline
 from itertools import product
 from sklearn.base import clone
 
 
-class TSFGridSearchCV(GridSearchCV):
+class TSFGridSearch(GridSearchCV):
     def fit(self, X, y=None, groups=None, **fit_params):
 
         # Partial best score
@@ -41,11 +41,11 @@ class TSFGridSearchCV(GridSearchCV):
             Xt, Yt = trans_pipe.transform(X=[], y=y)
 
             # Second step: We grid search over the final estimator
-            super(TSFGridSearchCV, self).__init__(final_estimator, final_estim_params, cv=self.cv)
-            super(TSFGridSearchCV, self).fit(Xt, Yt)
+            super(TSFGridSearch, self).__init__(final_estimator, final_estim_params, cv=self.cv)
+            super(TSFGridSearch, self).fit(Xt, Yt)
 
             # Did we find a better model ?
-            score = super(TSFGridSearchCV, self).score(Xt, Yt)
+            score = super(TSFGridSearch, self).score(Xt, Yt)
             if score > best_score:
                 best_score = score
                 best_partial_params = combo
