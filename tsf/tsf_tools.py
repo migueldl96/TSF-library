@@ -1,6 +1,7 @@
 import numpy as np
 import warnings
 
+
 def _fixed_window_delegate(serie, n_prev, horizon):
     partial_X = []
     begin = 0

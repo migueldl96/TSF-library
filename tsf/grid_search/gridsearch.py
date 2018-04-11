@@ -8,7 +8,7 @@ class TSFGridSearch(GridSearchCV):
     def fit(self, X, y=None, groups=None, **fit_params):
 
         # Partial best score
-        best_score = 0
+        best_score = None
 
         # Partial best params. GridSearch.fit set self.best_params_ with final_estimator best params,
         # this variable is intended to save global best params (transformer + final_estimator)
@@ -41,12 +41,12 @@ class TSFGridSearch(GridSearchCV):
             Xt, Yt = trans_pipe.transform(X=[], y=y)
 
             # Second step: We grid search over the final estimator
-            super(TSFGridSearch, self).__init__(final_estimator, final_estim_params, cv=self.cv)
+            super(TSFGridSearch, self).__init__(final_estimator, final_estim_params, scoring=self.scoring, cv=self.cv)
             super(TSFGridSearch, self).fit(Xt, Yt)
 
             # Did we find a better model ?
             score = super(TSFGridSearch, self).score(Xt, Yt)
-            if score > best_score:
+            if best_score is None or score > best_score:
                 best_score = score
                 best_partial_params = combo
                 best_estimator_params = self.best_params_
