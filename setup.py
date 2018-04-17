@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(name='tsf',
       version='0.1',
@@ -7,6 +7,6 @@ setup(name='tsf',
       author='Miguel Diaz',
       author_email='migueldialoz@gmail.com',
       license='Universidad de Cordoba',
-      packages=['tsf'],
+      packages=find_packages(),
       install_requires=['sklearn', 'numpy'],
       zip_safe=False)
