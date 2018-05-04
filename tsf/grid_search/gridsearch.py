@@ -5,8 +5,26 @@ from sklearn.base import clone
 
 
 class TSFGridSearch(GridSearchCV):
+    """
+    GridSearchCV extension to optimize TSF transformer hiperparameters.
+    """
     def fit(self, X, y=None, groups=None, **fit_params):
+        """
+        Decorator for prebuilt `fit` GridSearchCV method to consider TSF transformers.
 
+        Parameters
+        ----------
+        X : array-like
+            Previous data before transformation is appended to inputs matrix.
+            n_features is the number of features.
+        y : array-like
+            Time series array. If matrix, first row is consider endogenous and the rest as exogenous.
+        groups : array-like, with shape (n_samples,), optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+        **fit_params : dict of string -> object
+            Parameters passed to the ``fit`` method of the estimator
+        """
         # Partial best score
         best_score = None
 
@@ -35,13 +53,15 @@ class TSFGridSearch(GridSearchCV):
 
         # For every transformer params combinations, we fit a estimator model
         for combo in combos:
+
             # First step: We get the transformation for each combo
             trans_pipe.set_params(**combo)
 
             Xt, Yt = trans_pipe.transform(X=[], y=y)
 
             # Second step: We grid search over the final estimator
-            super(TSFGridSearch, self).__init__(final_estimator, final_estim_params, scoring=self.scoring, cv=self.cv)
+            super(TSFGridSearch, self).__init__(final_estimator, final_estim_params, scoring=self.scoring, cv=self.cv,
+                                                n_jobs=self.n_jobs)
             super(TSFGridSearch, self).fit(Xt, Yt)
 
             # Did we find a better model ?

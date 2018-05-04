@@ -1,8 +1,10 @@
 from sklearn.pipeline import Pipeline
-
+import numpy as np
 
 class TSFPipeline(Pipeline):
-
+    """
+    Pipeline extension to concatenate TSF transformer before a model is trained.
+    """
     @property
     def transform(self):
         if self._final_estimator is not None and hasattr(self._final_estimator, 'transform'):
@@ -35,6 +37,8 @@ class TSFPipeline(Pipeline):
     def fit(self, X=[], y=None, **fit_params):
         Xt, fit_params = self._fit(X, y, **fit_params)
 
+        y = self._check_consistent_y(y)
+
         if self._final_estimator is not None:
             if len(y.shape) == 1:
                 Yt = self._reshape_outputs(Xt, y)
@@ -66,6 +70,9 @@ class TSFPipeline(Pipeline):
         return self.steps[-1][-1].score(Xt, Yt, **score_params)
 
     def offset_y(self, real_y, predicted_y):
+
+        y = self._check_consistent_y()
+
         if len(real_y.shape) == 1:
             offset = len(real_y) - len(predicted_y)
             return real_y[offset:]
@@ -74,9 +81,23 @@ class TSFPipeline(Pipeline):
             return real_y[0, offset:]
 
     def _reshape_outputs(self, X, y):
+
+        y = self._check_consistent_y(y)
+
         if len(y.shape) == 1:
             offset = len(y) - X.shape[0]
             return y[offset:]
         else:
             offset = len(y[0]) - X.shape[0]
             return y[0, offset:]
+
+    def _check_consistent_y(self, y):
+        # Y must be ndarray-type
+        if not isinstance(y, np.ndarray):
+            y = np.array(y)
+
+        # Y must be 2D
+        if len(y.shape) == 1:
+            y = np.array([y])
+
+        return y

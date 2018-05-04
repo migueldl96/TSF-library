@@ -1,60 +1,27 @@
-.. Time Series Forecaster documentation master file, created by
-   sphinx-quickstart on Wed May  2 12:33:20 2018.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Welcome to Time Series Forecaster's documentation!
 ==================================================
+TSF is a library that extend Scikit-learn_ software composed by several time series preprocessing algorithms developed
+at the University of Cordoba in the `Learning and Artificial Neural Networks (AYRNA)`_ research group.
+This library is able to preprocess any time serie, either univariate or multivariate,
+and create a inputs matrix for every sample of the time serie(s) so any model of Scikit-learn_ can be trained.
+
+TSF code is open source and available at the `Github repository`_.
+
+.. _Scikit-learn: https://github.com/scikit-learn/scikit-learn/
+.. _Github repository: https://github.com/migueldl96/TSF-library`
+.. _Learning and Artificial Neural Networks (AYRNA): http://www.uco.es/grupos/ayrna/index.php/en
+
+Contents
+========
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
-$project
-========
-
-$project will solve your problem of where to start with documentation,
-by providing a basic explanation of how to do it easily.
-
-Look how easy it is to use:
-
-    import project
-    # Get your stuff done
-    project.do_stuff()
-
-Features
---------
-
-- Be awesome
-- Make things faster
-
-Installation
-------------
-
-Install $project by running:
-
-    install project
-
-Contribute
-----------
-
-- Issue Tracker: github.com/$project/$project/issues
-- Source Code: github.com/$project/$project
-
-Support
--------
-
-If you are having issues, please let us know.
-We have a mailing list located at: project@google-groups.com
+   quickstart
+   complementing
+   multivariate
+   pipeline
+   gridsearch
 
 License
 -------
