@@ -23,7 +23,6 @@ Contents
    pipeline
    gridsearch
 
-License
+References
 -------
-
-The project is licensed under the BSD license.
+*PAPERS*
