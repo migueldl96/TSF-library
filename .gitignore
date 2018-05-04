@@ -8,3 +8,4 @@ tsf/time_series_forescaster.pyc
 _mac/
 *.xml
 tsf.egg-info
+docs/_build
