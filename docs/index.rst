@@ -25,4 +25,6 @@ Contents
 
 References
 -------
-*PAPERS*
+`Energy Flux Range Classification by Using a Dynamic Window Autoregressive Model`_
+
+.. _Energy Flux Range Classification by Using a Dynamic Window Autoregressive Model: https://link.springer.com/chapter/10.1007%2F978-3-319-19222-2_8

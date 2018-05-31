@@ -346,10 +346,6 @@ class DinamicWindow(TSFBaseTransformer):
     horizon : str, optional, default: 1
         Distance for forecasting.
 
-    References
-    ----------
-    //TODO
-    Source: Paper David
     """
     def __init__(self, stat='variance', ratio=0.1, metrics=None, n_jobs=1, indexs=None, horizon=1):
         # Init superclass
@@ -515,17 +511,13 @@ class ClassChange(TSFBaseTransformer):
     horizon : str, optional, default: 1
         Distance for forecasting.
 
-    References
-    ----------
-    //TODO
-    Source: Paper Pedro
     """
-    def __init__(self, umbralizer=None, metrics=None, n_jobs=1, indexs=None, horizon=1):
+    def __init__(self, metrics=None, n_jobs=1, indexs=None, horizon=1):
         # Init superclass
         super(ClassChange, self).__init__(indexs=indexs, n_jobs=n_jobs, metrics=metrics, horizon=horizon)
 
-        self.umbralizer = umbralizer
         self.umbralized_serie = None
+
 
     def fit(self, X, y=None):
         """
@@ -542,10 +534,11 @@ class ClassChange(TSFBaseTransformer):
         -------
         self : object
         """
-        if self.umbralizer is not None:
-            self.umbralized_serie = map(self.umbralizer, y[0])
-        else:
-            self.umbralized_serie = y[0]
+        # Involved series
+        self.set_involved_series(y)
+
+        self.umbralized_serie = self.series[0]
+        self.series = np.delete(self.series, 0, axis=0)
 
         return self
 
@@ -590,7 +583,11 @@ class ClassChange(TSFBaseTransformer):
             Previous data with the transformation appended for each sample of the time serie.
         """
         # Involved series
+
         self.set_involved_series(y)
+
+        self.umbralized_serie = self.series[0]
+        self.series = np.delete(self.series, 0, axis=0)
 
         # Consistent params
         X, y = self.check_consistent_params(X, self.series)
@@ -600,14 +597,8 @@ class ClassChange(TSFBaseTransformer):
             raise ValueError("ClassChange need to receive one exogenous serie at least. Please use"
                              "an 'y' 2D array with at least 2 rows.")
 
-        # Umbralize endog
-        if self.umbralizer is not None:
-            self.umbralized_serie = map(self.umbralizer, y[0])
-        else:
-            self.umbralized_serie = y[0]
-
         # Get exogs series info
-        partial_X = _classchange_window_delegate(self.umbralized_serie, self.series[1:], self.metrics,
+        partial_X = _classchange_window_delegate(self.umbralized_serie, self.series, self.metrics,
                                                  TSFBaseTransformer.horizon)
 
         X = self.append_inputs(X, partial_X)

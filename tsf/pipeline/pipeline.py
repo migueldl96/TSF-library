@@ -71,7 +71,8 @@ class TSFPipeline(Pipeline):
 
     def offset_y(self, real_y, predicted_y):
 
-        y = self._check_consistent_y()
+        y = self._check_consistent_y(real_y)
+        y = self._check_consistent_y(predicted_y)
 
         if len(real_y.shape) == 1:
             offset = len(real_y) - len(predicted_y)
