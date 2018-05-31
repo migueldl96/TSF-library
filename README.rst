@@ -1,7 +1,11 @@
-|Travis|_
+|Travis|_ |Codecov|_
 
 .. |Travis| image:: https://travis-ci.org/migueldl96/TSF-library.svg?branch=master
 .. _Travis: https://travis-ci.org/migueldl96/TSF-library
+
+
+.. |Codecov|:: https://codecov.io/gh/migueldl96/TSF-library/branch/master/graph/badge.svg
+.. _Codecov: https://codecov.io/gh/migueldl96/TSF-library
 
 TSF library
 ===========
