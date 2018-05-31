@@ -1,0 +1,11 @@
+[
+  "tests/classchange_test.py::TestClassChange::test_multi_maker", 
+  "tests/classchange_test.py::TestClassChange::test_shape", 
+  "tests/dinamicwindow_test.py::TestDinamicWindow::test_incremental_variance", 
+  "tests/dinamicwindow_test.py::TestDinamicWindow::test_multi_maker", 
+  "tests/dinamicwindow_test.py::TestDinamicWindow::test_shape", 
+  "tests/dinamicwindow_test.py::TestDinamicWindow::test_single_maker", 
+  "tests/simplear_test.py::TestSimpleAR::test_multi_maker", 
+  "tests/simplear_test.py::TestSimpleAR::test_shape", 
+  "tests/simplear_test.py::TestSimpleAR::test_single_maker"
+]
