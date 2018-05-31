@@ -10,6 +10,7 @@ python:
 
 install:
  - pip install --user sklearn
+ - pip install --user pytest
  - pip install --user .
 
 script:
