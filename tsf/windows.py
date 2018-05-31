@@ -442,47 +442,6 @@ class DinamicWindow(TSFBaseTransformer):
             raise ValueError("Invalid stat argument for dinamic window. Please use ['variance'] or own stat function.")
 
 
-class RangeWindow(TSFBaseTransformer):
-    def __init__(self, metrics=None, n_jobs=1, indexs=None, horizon=1):
-        # Init superclass
-        super(RangeWindow, self).__init__(indexs=indexs, n_jobs=n_jobs, metrics=metrics, horizon=horizon)
-
-        # Fit attributes
-        self._dev = None
-
-    def fit(self, X, y=None):
-        # Deviation for each serie
-        self._dev = (np.max(y, axis=1) - np.min(y, axis=1)) / np.mean(y, axis=1)
-        return self
-
-    def transform(self, X, y=None):
-        X = self.fit_transform(X, y)
-        return X
-
-    def fit_transform(self, X, y=None, **fit_params):
-        # Involved series
-        self.set_involved_series(y)
-
-        # Consistent params
-        X, y = self.check_consistent_params(X, self.series)
-
-        # Deviation for each serie
-        self._dev = (np.max(self.series, axis=1) - np.min(self.series, axis=1)) / np.mean(self.series, axis=1)
-
-        # Build database for every output
-        partial_X = Parallel(n_jobs=self.n_jobs)(
-            delayed(_range_window_delegate)(serie, self._dev[index], self._metrics, horizon=TSFBaseTransformer.horizon)
-            for index, serie
-            in enumerate(self.series))
-
-        X = self.append_inputs(X, partial_X)
-
-        return X
-
-    def _in_range(self, value, allowed_range):
-        return allowed_range.min() < value < allowed_range.max()
-
-
 class ClassChange(TSFBaseTransformer):
     """
     ClassChange Model using variable window sizes.
