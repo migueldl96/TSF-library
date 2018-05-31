@@ -13,6 +13,8 @@ install:
  - pip install --user scipy
  - pip install --user pytest
  - pip install --user .
+ - pip install --user codecov
 
 script:
  - pytest
+ - codecov
