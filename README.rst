@@ -17,3 +17,26 @@ and create a inputs matrix for every sample of the time serie(s) so any model of
 
 .. _Scikit-learn: https://github.com/scikit-learn/scikit-learn/
 .. _Learning and Artificial Neural Networks (AYRNA): http://www.uco.es/grupos/ayrna/index.php/en
+
+Installation
+------------
+
+Dependencies
+~~~~~~~~~~~~
+
+TSF use requires:
+
+- Python (>= 2.7 or >= 3.4)
+- NumPy (>= 1.8.2)
+- SciPy (>= 0.13.3)
+- Scikit-learn (>= 0.19)
+
+User installation
+~~~~~~~~~~~~~~~~~
+
+Documentation
+~~~~~~~~~~~~~
+
+References
+~~~~~~~~~~
+
