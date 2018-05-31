@@ -9,11 +9,11 @@ python:
  - "pypy3.5"
 
 install:
+ - pip install --user codecov
  - pip install --user sklearn
  - pip install --user scipy
- - pip install --user pytest
+ - pip install --user pytest pytest-cov
  - pip install --user .
- - pip install --user codecov
 
 script:
  - pytest --cov=./

@@ -3,5 +3,4 @@ branch = True
 source = tsf
 include = */tsf/*
 omit =
-    */sklearn/externals/*
-    */benchmarks/*
+    */setup.py
