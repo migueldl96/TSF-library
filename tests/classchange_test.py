@@ -5,8 +5,8 @@ import unittest
 import numpy.testing as npt
 import numpy as np
 sys.path.append('../tsf')
-from tsf_windows import ClassChange
-from tsf_tools import _classchange_window_delegate
+from tsf.windows import ClassChange
+from tsf.tsf_tools import _classchange_window_delegate
 from random import randint
 
 

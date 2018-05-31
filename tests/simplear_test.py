@@ -5,8 +5,8 @@ import unittest
 import numpy.testing as npt
 import numpy as np
 sys.path.append('../tsf')
-from tsf_windows import SimpleAR
-from tsf_tools import _fixed_window_delegate
+from tsf.windows import SimpleAR
+from tsf.tsf_tools import _fixed_window_delegate
 from random import randint
 
 

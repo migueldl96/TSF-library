@@ -6,8 +6,8 @@ import numpy.testing as npt
 import numpy as np
 from random import randint
 sys.path.append('../tsf')
-from tsf_windows import DinamicWindow
-from tsf_tools import _dinamic_window_delegate, incremental_variance
+from tsf.windows import DinamicWindow
+from tsf.tsf_tools import _dinamic_window_delegate, incremental_variance
 
 
 def var(samples):
