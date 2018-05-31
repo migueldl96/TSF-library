@@ -1,6 +1,6 @@
 import numpy as np
 import warnings
-from tsf_tools import _fixed_window_delegate, _range_window_delegate, _dinamic_window_delegate, _classchange_window_delegate, incremental_variance
+from tsf_tools import _fixed_window_delegate, _dinamic_window_delegate, _classchange_window_delegate, incremental_variance
 from sklearn.externals.joblib import Parallel, delayed
 from sklearn.base import BaseEstimator, TransformerMixin
 
