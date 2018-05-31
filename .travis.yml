@@ -5,10 +5,12 @@ python:
  - "3.3"
  - "3.4"
  - "3.5"
+ - "pypy2.7"
+ - "pypy3.5"
 
 install:
- - pip install sklearn
- - pip install .
+ - pip install --user sklearn
+ - pip install --user .
 
 script:
  - pytest
