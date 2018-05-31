@@ -1,3 +1,8 @@
+|Travis|_
+
+.. |Travis| image:: https://travis-ci.org/migueldl96/TSF-library.svg?branch=master
+.. _Travis: https://travis-ci.org/migueldl96/TSF-library
+
 TSF library
 ===========
 
