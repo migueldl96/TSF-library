@@ -17,7 +17,7 @@ install:
  - pip install --user .
 
 script:
- - pytest --cov=./
+ - pytest --cov=tsf tests/
 
 after_success:
  - codecov
