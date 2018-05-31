@@ -103,7 +103,6 @@ class TSFBaseTransformer(BaseEstimator, TransformerMixin):
         # Y must be 2D
         if len(y.shape) == 1:
             y = np.array([y])
-
         return y
 
     def check_consistent_X(self, X):
@@ -583,14 +582,13 @@ class ClassChange(TSFBaseTransformer):
             Previous data with the transformation appended for each sample of the time serie.
         """
         # Involved series
-
         self.set_involved_series(y)
 
         self.umbralized_serie = self.series[0]
         self.series = np.delete(self.series, 0, axis=0)
 
         # Consistent params
-        X, y = self.check_consistent_params(X, self.series)
+        X, self.series = self.check_consistent_params(X, self.series)
 
         # We need al least one exog serie
         if len(y.shape) == 1 or y.shape[0] < 2:
