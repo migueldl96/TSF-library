@@ -4,7 +4,7 @@
 .. _Travis: https://travis-ci.org/migueldl96/TSF-library
 
 
-.. |Codecov|:: https://codecov.io/gh/migueldl96/TSF-library/branch/master/graph/badge.svg
+.. |Codecov| image:: https://codecov.io/gh/migueldl96/TSF-library/branch/master/graph/badge.svg
 .. _Codecov: https://codecov.io/gh/migueldl96/TSF-library
 
 TSF library
