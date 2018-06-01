@@ -53,8 +53,8 @@ class TestClassChange(unittest.TestCase):
             horizon = randint(1, 30)
             random_data = np.insert(exogs_data, 0, endog_data, 0)
 
-            cc = ClassChange(metrics=metrics, horizon=horizon)
-            result = cc.transform(X=[], y=random_data)
+            cc = ClassChange(metrics=metrics, horizon=horizon, indexs=np.arange(start=0, stop=exogs_number+1, step=1))
+            result = cc.fit(X=[], y=random_data).transform(X=[], y=random_data)
 
             self.assertEquals(result.shape[0], series_length - horizon)
             self.assertEquals(result.shape[1], exogs_number * metrics_number)

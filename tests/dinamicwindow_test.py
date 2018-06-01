@@ -57,7 +57,7 @@ class TestDinamicWindow(unittest.TestCase):
                     [8, 0.6666667, 18, 0.6666667, 28, 0.6666667]]
 
         dw = DinamicWindow(ratio=ratio, stat='variance', horizon=1)
-        Xt = dw.transform(X=[], y=self.data)
+        Xt = dw.fit(X=[], y=self.data).transform(X=[], y=self.data)
 
         # Test data
         npt.assert_allclose(Xt, expected)

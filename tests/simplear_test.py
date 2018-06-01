@@ -43,6 +43,7 @@ class TestSimpleAR(unittest.TestCase):
         Xt = sar.transform(X=[], y=self.data)
 
         npt.assert_allclose(Xt, expected)
+        npt.assert_allclose(self.data[0][2:], sar.offset_y(Xt, self.data))
 
     def test_shape(self):
 
