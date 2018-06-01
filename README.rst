@@ -4,7 +4,7 @@
 .. _Travis: https://travis-ci.org/migueldl96/TSF-library
 
 .. |AppTrevor| image:: https://ci.appveyor.com/api/projects/status/afjl2dkn4fb45d8p?svg=true
-.. _AppTrevor : https://ci.appveyor.com/api/projects/status/afjl2dkn4fb45d8p/branch/master?svg=true
+.. _AppTrevor : https://ci.appveyor.com/project/migueldl96/tsf-library/history
 
 .. |Codecov| image:: https://codecov.io/gh/migueldl96/TSF-library/branch/master/graph/badge.svg
 .. _Codecov: https://codecov.io/gh/migueldl96/TSF-library
