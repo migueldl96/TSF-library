@@ -1,4 +1,4 @@
-|Travis|_ |AppTrevor|_ |Codecov|_
+|Travis|_ |AppTrevor|_ |Codecov|_ |Python27| |Python35|
 
 .. |Travis| image:: https://travis-ci.org/migueldl96/TSF-library.svg?branch=master
 .. _Travis: https://travis-ci.org/migueldl96/TSF-library
@@ -8,6 +8,11 @@
 
 .. |Codecov| image:: https://codecov.io/gh/migueldl96/TSF-library/branch/master/graph/badge.svg
 .. _Codecov: https://codecov.io/gh/migueldl96/TSF-library
+
+.. |Python27| image:: https://img.shields.io/badge/python-2.7-blue.svg
+
+.. |Python35| image:: https://img.shields.io/badge/python-3.5-blue.svg
+
 
 TSF library
 ===========
