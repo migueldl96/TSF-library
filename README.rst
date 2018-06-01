@@ -23,7 +23,7 @@ TSF comes with 3 different windows-based autorregressive models:
 - DinamicWindow
 - ClassChange
 
-Further information about this models can be found on online documentation.
+Further information about these models can be found on online documentation.
 
 .. _Scikit-learn: https://github.com/scikit-learn/scikit-learn/
 .. _Learning and Artificial Neural Networks (AYRNA): http://www.uco.es/grupos/ayrna/index.php/en

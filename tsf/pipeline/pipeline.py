@@ -32,7 +32,7 @@ class TSFPipeline(Pipeline):
         elif last_step is None:
             return Xt, Yt
         else:
-            return last_step.fit(Xt, Yt, **fit_params).transform(Xt)
+            return last_step.fit(Xt, Yt, **fit_params)
 
     def fit(self, X=[], y=None, **fit_params):
         Xt, fit_params = self._fit(X, y, **fit_params)
@@ -66,7 +66,9 @@ class TSFPipeline(Pipeline):
         if sample_weight is not None:
             score_params['sample_weight'] = sample_weight
 
-        Yt = y[Xt.shape[0]:]
+
+        Yt = y[0][Xt.shape[0]:]
+
         return self.steps[-1][-1].score(Xt, Yt, **score_params)
 
     def offset_y(self, real_y, predicted_y):

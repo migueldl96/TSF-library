@@ -28,7 +28,8 @@ class TestPipeline(unittest.TestCase):
 
         pipe = TSFPipeline([('ar', SimpleAR(n_prev=3)),
                             ('dw', DinamicWindow()),
-                            ('cc', ClassChange())])
+                            ('cc', ClassChange()),
+                            ('', None)])
         X_t, y_t = pipe.transform(X=[], y=self.data)
 
         npt.assert_allclose(expected_x, X_t)
@@ -45,6 +46,26 @@ class TestPipeline(unittest.TestCase):
         predicted = pipe.predict(test)
 
         npt.assert_allclose(pipe.offset_y(test, predicted), predicted, atol=0.05, rtol=0)
+
+    def test_fit_transform(self):
+        lineal_serie_train = [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                              [11, 12, 13, 14, 15, 16, 17, 18, 19, 20]]
+        lineal_serie_test  = [[11, 12, 13, 14, 15, 16],
+                              [21, 22, 23, 24, 25, 26]]
+
+        pipe = TSFPipeline([('ar', SimpleAR(n_prev=3)),
+                            ('dw', DinamicWindow()),
+                            ('cc', ClassChange()),
+                            ('Lasso', LassoCV())])
+        pipe.fit_transform(X=[], y=lineal_serie_train)
+        predicted = pipe.predict(lineal_serie_test)
+
+        score = pipe.score(lineal_serie_test)
+
+        npt.assert_allclose(pipe.offset_y(lineal_serie_test[0], predicted), predicted, atol=0.05, rtol=0)
+        npt.assert_approx_equal(score, 1, significant=3)
+
+
 
 
 if __name__ == '__main__':

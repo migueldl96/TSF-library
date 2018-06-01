@@ -103,6 +103,7 @@ class TSFBaseTransformer(BaseEstimator, TransformerMixin):
         # Y must be 2D
         if len(y.shape) == 1:
             y = np.array([y])
+
         return y
 
     def check_consistent_X(self, X):
@@ -517,6 +518,8 @@ class ClassChange(TSFBaseTransformer):
             Previous data with the transformation appended for each sample of the time serie.
         """
         # We need al least one exog serie
+        y = self.check_consistent_y(y)
+
         if len(y.shape) == 1 or y.shape[0] < 2:
             raise ValueError("ClassChange need tor receive one exogenous serie at least. Please use"
                              "an 'y' 2D array with at least 2 rows.")
@@ -546,6 +549,7 @@ class ClassChange(TSFBaseTransformer):
         self.umbralized_serie = self.series[0]
         self.series = np.delete(self.series, 0, axis=0)
 
+        y = self.check_consistent_y(y)
         # Consistent params
         X, self.series = self.check_consistent_params(X, self.series)
 
