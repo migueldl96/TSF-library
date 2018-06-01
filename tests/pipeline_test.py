@@ -6,7 +6,6 @@ import numpy as np
 from tsf.pipeline import TSFPipeline
 from tsf.windows import SimpleAR, DinamicWindow, ClassChange
 from sklearn.linear_model import LassoCV
-from random import randint
 
 
 class TestPipeline(unittest.TestCase):
