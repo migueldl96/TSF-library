@@ -28,7 +28,7 @@ TSF comes with 3 different windows-based autorregressive models:
 
 - SimpleAR
 - DinamicWindow
-- ClassChange
+- ClassChange [1]
 
 Further information about these models can be found on online documentation.
 
@@ -73,11 +73,11 @@ check the library was successfully installed::
 
 
 Documentation
--------------
+~~~~~~~~~~~~~
 Examples of use and installation guide can be found in the online documentation hosted by ReadTheDocs_.
 
 .. _ReadTheDocs: https://tsf-library.readthedocs.io/en/latest/
 
 References
-----------
-
+~~~~~~~~~~
+- [1] P.A. Gutierrez, J. C. Fernández, M. Pérez-Ortiz, L. Cornejo-Bueno, E. Alexandre-Cortizo and C. Herv́as-Mart́ınez, "Energy flux range classification by using a dynamic window autoregressive model," Lecture Notes in Computer Science, pp. 92–102.
