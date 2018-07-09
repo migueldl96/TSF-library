@@ -5,8 +5,7 @@ import unittest
 import numpy.testing as npt
 import numpy as np
 sys.path.append('../tsf')
-from tsf.windows import SimpleAR
-from tsf.tsf_tools import _fixed_window_delegate
+from tsf.windows.static import SimpleAR
 from random import randint
 
 
@@ -24,14 +23,16 @@ class TestSimpleAR(unittest.TestCase):
                   [6, 7],
                   [7, 8],
                   [8, 9]]
-        result = _fixed_window_delegate(self.data[0], 2, horizon=1)
+
+        sar = SimpleAR(n_prev=2)
+        result = sar.transform(X=[], y=self.data[0])
 
         # Test data
         npt.assert_allclose(result, expected)
 
     def test_multi_maker(self):
         # Test data for n_prev = 2
-        sar = SimpleAR(2, horizon=1)
+        sar = SimpleAR(n_prev=2, horizon=1)
         expected = [[1, 2, 11, 12, 21, 22],
                   [2, 3, 12, 13, 22, 23],
                   [3, 4, 13, 14, 23, 24],

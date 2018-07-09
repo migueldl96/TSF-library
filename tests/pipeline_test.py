@@ -4,7 +4,8 @@ import unittest
 import numpy.testing as npt
 import numpy as np
 from tsf.pipeline import TSFPipeline
-from tsf.windows import SimpleAR, DinamicWindow, ClassChange
+from tsf.windows.dinamic import StatAnalysis, ClassChange
+from tsf.windows.static import SimpleAR
 from sklearn.linear_model import LassoCV
 
 
@@ -26,7 +27,7 @@ class TestPipeline(unittest.TestCase):
         expected_y = [1, 2, 2, 2, 1, 1, 1]
 
         pipe = TSFPipeline([('ar', SimpleAR(n_prev=3)),
-                            ('dw', DinamicWindow()),
+                            ('sa', StatAnalysis()),
                             ('cc', ClassChange()),
                             ('', None)])
         X_t, y_t = pipe.transform(X=[], y=self.data)
@@ -53,7 +54,7 @@ class TestPipeline(unittest.TestCase):
                               [21, 22, 23, 24, 25, 26]]
 
         pipe = TSFPipeline([('ar', SimpleAR(n_prev=3)),
-                            ('dw', DinamicWindow()),
+                            ('sa', StatAnalysis()),
                             ('cc', ClassChange()),
                             ('Lasso', LassoCV())])
         pipe.fit_transform(X=[], y=lineal_serie_train)
@@ -79,8 +80,8 @@ class TestPipeline(unittest.TestCase):
                       [9, 29, 18, 0.6666667]]
         expected_Y = [2, 3, 4, 5, 6, 7, 8, 9, 10]
 
-        pipe = TSFPipeline([('ar', SimpleAR(n_prev=1, indexs=[0, 2])),
-                            ('dw', DinamicWindow(indexs=[1])),
+        pipe = TSFPipeline([('ar', SimpleAR(n_prev=1, indices=[0, 2])),
+                            ('sa', StatAnalysis(indices=[1])),
                             ('', None)])
         Xt, Yt = pipe.fit_transform(X=[], y=lineal_serie)
 

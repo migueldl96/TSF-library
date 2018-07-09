@@ -1,5 +1,4 @@
 from .base import TSFBaseTransformer
-from sklearn.externals.joblib import Parallel, delayed
 import numpy as np
 
 
@@ -16,7 +15,7 @@ class SimpleAR(TSFBaseTransformer):
     n_prev : int, optional, default: 5
         Number of previous samples to consider in the transformation.
     indices : array_like, optional, default: None
-        Indexs of series to consider in the transformation (multivariate only). If None,
+        Indices of series to consider in the transformation (multivariate only). If None,
         all series will be considered.
     n_jobs : int, optional, default: 1
         Number of parallel CPU cores to use.

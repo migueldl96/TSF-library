@@ -5,8 +5,7 @@ import unittest
 import numpy.testing as npt
 import numpy as np
 sys.path.append('../tsf')
-from tsf.windows import ClassChange
-from tsf.tsf_tools import _classchange_window_delegate
+from tsf.windows.dinamic import ClassChange
 from random import randint
 
 
@@ -34,7 +33,9 @@ class TestClassChange(unittest.TestCase):
                     [16, 0.6666667, 26, 0.6666667],
                     [18, 0, 28, 0],
                     [18.5, 0.25, 28.5, 0.25]]
-        result = _classchange_window_delegate(self.data[0], self.data[1:], metrics=['mean', 'variance'], horizon=1)
+        cc = ClassChange()
+        result = cc.transform(X=[], y=self.data)
+
         # Test data
         npt.assert_allclose(result, expected)
 
@@ -53,7 +54,7 @@ class TestClassChange(unittest.TestCase):
             horizon = randint(1, 30)
             random_data = np.insert(exogs_data, 0, endog_data, 0)
 
-            cc = ClassChange(metrics=metrics, horizon=horizon, indexs=np.arange(start=0, stop=exogs_number+1, step=1))
+            cc = ClassChange(metrics=metrics, horizon=horizon, indices=np.arange(start=0, stop=exogs_number+1, step=1))
             result = cc.fit(X=[], y=random_data).transform(X=[], y=random_data)
 
             self.assertEquals(result.shape[0], series_length - horizon)

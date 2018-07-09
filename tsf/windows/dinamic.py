@@ -1,12 +1,6 @@
 from .base import TSFBaseTransformer
-from sklearn.externals.joblib import Parallel, delayed
 import numpy as np
 import warnings
-
-
-# Unwrapper allows parallelizing
-def unwrap_self(window, *kwarg):
-    return window.run_preprocessing(*kwarg)
 
 
 class StatAnalysis(TSFBaseTransformer):
@@ -14,7 +8,7 @@ class StatAnalysis(TSFBaseTransformer):
     StatAnalysis Model using variable window sizes.
 
     The StatAnalysis transformers creates windows limited by a `stat` ratio
-    over the total of the time serie. This windows is summarize in some `metrics`.
+    over the total of the time serie. The window samples are summarize in some `metrics`.
 
     Parameters
     ----------
@@ -24,7 +18,7 @@ class StatAnalysis(TSFBaseTransformer):
     ratio : float, default: 0.1
         Ratio over the total time serie `stat` to limit the window size.
     metrics : array_like, 'variance' or 'mean' or callable, default: ['mean', 'variance']
-        Array indicating the metrics to use to summarize the windows content. Predefined
+        Array indicating the metrics to use to summarize the window content. Predefined
         metrics are 'mean' and 'variance', but callable receiving an array of samples and
         returning a single number can also be used as element of the array.
     indices : array_like, optional, default: None

@@ -5,7 +5,8 @@ import numpy.testing as npt
 import numpy as np
 from tsf.pipeline import TSFPipeline
 from tsf.grid_search import TSFGridSearch
-from tsf.windows import SimpleAR, DinamicWindow, ClassChange
+from tsf.windows.dinamic import StatAnalysis, ClassChange
+from tsf.windows.static import SimpleAR
 from sklearn.tree import DecisionTreeClassifier
 
 
@@ -18,7 +19,7 @@ class TestGridSearch(unittest.TestCase):
     # Just transformation test
     def test_fit(self):
         pipe = TSFPipeline([('ar', SimpleAR(n_prev=3)),
-                            ('dw', DinamicWindow()),
+                            ('sa', StatAnalysis()),
                             ('cc', ClassChange()),
                             ('DecisionTree', DecisionTreeClassifier())])
         params = [
@@ -26,7 +27,7 @@ class TestGridSearch(unittest.TestCase):
                 'ar__n_prev': [1, 2, 3]
             },
             {
-                'dw__ratio': [0.1, 0.2]
+                'sa__ratio': [0.1, 0.2]
             },
             {
                 'criterion': ["gini", "entropy"]
